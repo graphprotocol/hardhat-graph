@@ -1,13 +1,29 @@
 {
-  "name": "hardhat-project",
+  "name": "hardhat-graph",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "dist/src/",
+    "src/",
+    "README.md"
+  ],
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.5",
-    "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "chai": "^4.3.6",
-    "ethereum-waffle": "^3.4.4",
-    "ethers": "^5.6.4",
-    "hardhat": "^2.9.3",
     "@graphprotocol/graph-cli": "0.29.0",
     "@graphprotocol/graph-ts": "^0.26.0",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^12.20.50",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^3.4.1",
+    "hardhat": "^2.9.3",
+    "mocha": "^9.2.2",
+    "prettier": "^2.6.2",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.4"
   }
 }
