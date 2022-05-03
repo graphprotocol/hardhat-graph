@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
-    "postinstall": "tsc"
+    "prepare": "npm run build",
+    "build": "tsc"
   },
   "files": [
     "dist/src/",
