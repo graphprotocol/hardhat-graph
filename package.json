@@ -2,17 +2,18 @@
   "name": "hardhat-graph",
   "version": "0.0.1",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts"
   "scripts": {
-    "prepare": "npm run build",
-    "build": "tsc"
+    "build": "tsc",
+    "prepare": "npm run build"
   },
   "files": [
-    "dist/src/",
-    "src/",
+    "dist/*",
+    "src/*",
     "README.md"
   ],
   "devDependencies": {
-    "@graphprotocol/graph-cli": "0.29.0",
+    "@graphprotocol/graph-cli": "^0.29.0",
     "@graphprotocol/graph-ts": "^0.26.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^12.20.50",
@@ -26,5 +27,10 @@
     "prettier": "^2.6.2",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.4"
+  },
+  "peerDependencies": {
+    "hardhat": "^2.9.3",
+    "@graphprotocol/graph-cli": "^0.29.0",
+    "@graphprotocol/graph-ts": "^0.26.0"
   }
 }
