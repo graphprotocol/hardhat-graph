@@ -1,10 +1,10 @@
-const Protocol = require('@graphprotocol/graph-cli/src/protocols')
-const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
-const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/src/command-helpers/scaffold')
-import * as toolbox from 'gluegun'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import path from 'path'
 import immutable from 'immutable'
+const graphCli = require('@graphprotocol/graph-cli/src/cli')
+const Protocol = require('@graphprotocol/graph-cli/src/protocols')
+const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
+const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/src/command-helpers/scaffold')
 
 export const initSubgraph = async (taskArgs: { contract: string, address: string }, hre: HardhatRuntimeEnvironment): Promise<boolean> =>
   await withSpinner(
@@ -47,7 +47,7 @@ export const initSubgraph = async (taskArgs: { contract: string, address: string
     }
   )
 
-export const initRepository = async (): Promise<boolean> =>
+export const initRepository = async (toolbox: any): Promise<boolean> =>
   await withSpinner(
     `Create git repository`,
     `Failed to create git repository`,
@@ -61,7 +61,7 @@ export const initRepository = async (): Promise<boolean> =>
     }
   )
 
-export const initGitignore = async (): Promise<boolean> =>
+export const initGitignore = async (toolbox: any): Promise<boolean> =>
   await withSpinner(
     `Add subgraph files to .gitignore`,
     `Failed to add subgraph files to .gitignore`,
@@ -80,13 +80,12 @@ export const initGitignore = async (): Promise<boolean> =>
     }
   )
 
-export const runCodegen = async (): Promise<boolean> =>
-  await withSpinner(
-    `Generate ABI and schema types`,
-    `Failed to generate code from ABI and GraphQL schema`,
-    `Warnings while generating code from ABI and GraphQL schema`,
-    async (spinner: any) => {
-      await toolbox.system.run('npx graph codegen', { cwd: 'subgraph' } )
-      return true
-    }
-  )
+export const runCodegen = async (): Promise<boolean> => {
+  await graphCli.run(['codegen', 'subgraph/subgraph.yaml', '-o', 'subgraph/generated'])
+  return true
+}
+
+export const runBuild = async(network: string): Promise<boolean> => {
+  await graphCli.run(['build', 'subgraph/subgraph.yaml', '-o', 'subgraph/build', '--network', network, '--networkFile', 'subgraph/networks.json'])
+  return true
+}
