@@ -6,6 +6,7 @@ import path from 'path'
 import immutable from 'immutable'
 import { ethers } from 'ethers'
 import { spawn } from 'child_process'
+const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 const { initNetworksConfig } = require('@graphprotocol/graph-cli/src/command-helpers/network')
 
 task("graph", "A do all task")
@@ -71,64 +72,74 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
   .addParam("contract", "The name of the contract")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs: any, hre) => {
-    // Update the ABI in the subgraph/abis folder
-    // Update the address in the networks file
-    // Update the address in the subgraph.yaml
-    // Check for changes to the events and inform the user
-    let subgraph = await toolbox.filesystem.read(path.join('subgraph', 'subgraph.yaml'), 'utf8')
-    if (!subgraph) {
+
+    const subgraph = await toolbox.filesystem.read(path.join('subgraph', 'subgraph.yaml'), 'utf8')
+    if (!toolbox.filesystem.exists("subgraph") || !subgraph) {
       toolbox.print.error("No subgraph found! Please first initialize a new subgraph!")
       process.exit(1)
     }
 
-    // New contract version
-    let contract = await hre.artifacts.readArtifact(taskArgs.contract)
+    await withSpinner(
+      `Update subgraph`,
+      `Failed to update subgraph`,
+      `Warnings while updating subgraph`,
+      async (spinner: any) => {
+        // New contract version
+        step(spinner, `Fetching new contract version`)
+        let contract = await hre.artifacts.readArtifact(taskArgs.contract)
 
-    // Old contract version
-    let manifest = YAML.parse(subgraph)
-    let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contract)
-    let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == taskArgs.contract)
-    let abiJson = await toolbox.filesystem.read(path.join('subgraph', subgraphAbi.file))
+        // Old contract version
+        step(spinner, `Fetching current contract version from subgraph`)
+        let manifest = YAML.parse(subgraph)
+        let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contract)
+        let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == taskArgs.contract)
+        let abiJson = await toolbox.filesystem.read(path.join('subgraph', subgraphAbi.file))
 
-    if (!abiJson) {
-      toolbox.print.error(`Could not read ${path.join('subgraph', subgraphAbi.file)}`)
-      process.exit(1)
-    }
-    // Convert to Interface
-    let newAbi = new ethers.utils.Interface(contract.abi)
-    let currentAbi = new ethers.utils.Interface(abiJson)
+        if (!abiJson) {
+          toolbox.print.error(`Could not read ${path.join('subgraph', subgraphAbi.file)}`)
+          process.exit(1)
+        }
+        // Convert to Interface
+        let newAbi = new ethers.utils.Interface(contract.abi)
+        let currentAbi = new ethers.utils.Interface(abiJson)
 
-    // Fetch new events from Interface
-    let newAbiEvents = await getEvents(newAbi)
-    // Fetch current dataSource events from subgraph.yaml
-    let currentAbiEvents = dataSource.mapping.eventHandlers.map((handler: { event: string }) => { return handler.event })
-    let newEvents = await eventsDiff(newAbiEvents, currentAbiEvents)
-    let removedEvents = await eventsDiff(currentAbiEvents, newAbiEvents)
+        // Fetch new events from Interface
+        let newAbiEvents = await getEvents(newAbi)
+        // Fetch current dataSource events from subgraph.yaml
+        let currentAbiEvents = dataSource.mapping.eventHandlers.map((handler: { event: string }) => { return handler.event })
+        let newEvents = await eventsDiff(newAbiEvents, currentAbiEvents)
+        let removedEvents = await eventsDiff(currentAbiEvents, newAbiEvents)
 
-    // Update the subgraph ABI
-    await toolbox.patching.update(path.join('subgraph', subgraphAbi.file), (abi: any) => {
-      return contract.abi
-    })
+        // Update the subgraph ABI
+        step(spinner, `Updating contract ABI in subgraph`)
+        await toolbox.patching.update(path.join('subgraph', subgraphAbi.file), (abi: any) => {
+          return contract.abi
+        })
 
-    await updateNetworksFile(hre.network.name, dataSource.name, taskArgs.address)
+        step(spinner, `Updating contract's ${hre.network.name} address in networks.json`)
+        await updateNetworksFile(hre.network.name, dataSource.name, taskArgs.address)
 
-    if(newAbiEvents.length != currentAbiEvents.length || newEvents.length != 0 || removedEvents.length != 0) {
-      toolbox.print.warning(
-        `Contract events have been changed!\nCurrent events:\n ${currentAbiEvents.join('\n ')}\nNew events:\n ${newAbiEvents.join('\n ')}\nPlease address the change in your subgraph.yaml and run graph codegen and graph build from the subgraph folder!`
-      )
-    } else {
-      let codegen = await runCodegen()
-      if (codegen !== true) {
-        process.exitCode = 1
-        return
+        step(spinner, `Checking for changes to the contract events`)
+        if(newAbiEvents.length != currentAbiEvents.length || newEvents.length != 0 || removedEvents.length != 0) {
+          toolbox.print.warning(
+            `Contract events have been changed!\nCurrent events:\n ${currentAbiEvents.join('\n ')}\nNew events:\n ${newAbiEvents.join('\n ')}\nPlease address the change in your subgraph.yaml and run graph codegen and graph build from the subgraph folder!`
+          )
+        } else {
+          let codegen = await runCodegen()
+          if (codegen !== true) {
+            process.exit(1)
+            return
+          }
+
+          let build = await runBuild(hre.network.name)
+          if (build !== true) {
+            process.exitCode = 1
+            return
+          }
+        }
+        return true
       }
-
-      let build = await runBuild(hre.network.name)
-      if (build !== true) {
-        process.exitCode = 1
-        return
-      }
-    }
+    )
   })
 
 const getEvents = async (abi: ethers.utils.Interface): Promise<string[]> => {
