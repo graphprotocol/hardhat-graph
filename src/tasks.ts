@@ -10,16 +10,15 @@ const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-help
 const { initNetworksConfig } = require('@graphprotocol/graph-cli/src/command-helpers/network')
 
 task("graph", "A do all task")
-  // .addOptionalPositionalParam("subtask", "Specify which subtask to execute")
-  // .addParam("contract", "The name of the contract")
-  // .addParam("address", "The address of the contract")
-  .setAction(async (taskArgs) => {
-      // Check if subgraph folder exists
-      // If not run init
-      // If exists check if contract exists
-      // If exists, update
-      // else add (when the add command is ready)
-      // Alternatively pass a specific subtask to execute
+  .addOptionalPositionalParam("subtask", "Specify which subtask to execute")
+  .addParam("contract", "The name of the contract")
+  .addParam("address", "The address of the contract")
+  .setAction(async (taskArgs, hre) => {
+      let subgraph = toolbox.filesystem.exists("subgraph") == "dir" && toolbox.filesystem.exists("subgraph/subgraph.yaml") == "file"
+      let command = subgraph ? "update" : "init"
+      let { subtask, ...args } = taskArgs
+
+      await hre.run(subtask || command, args)
   });
 
 
@@ -73,6 +72,7 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs: any, hre) => {
 
+    const network = hre.network.name || hre.config.defaultNetwork
     const subgraph = await toolbox.filesystem.read(path.join('subgraph', 'subgraph.yaml'), 'utf8')
     if (!toolbox.filesystem.exists("subgraph") || !subgraph) {
       toolbox.print.error("No subgraph found! Please first initialize a new subgraph!")
@@ -116,8 +116,8 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
           return contract.abi
         })
 
-        step(spinner, `Updating contract's ${hre.network.name} address in networks.json`)
-        await updateNetworksFile(hre.network.name, dataSource.name, taskArgs.address)
+        step(spinner, `Updating contract's ${network} address in networks.json`)
+        await updateNetworksFile(network, dataSource.name, taskArgs.address)
 
         step(spinner, `Checking for changes to the contract events`)
         if(newAbiEvents.length != currentAbiEvents.length || newEvents.length != 0 || removedEvents.length != 0) {
@@ -131,7 +131,7 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
             return
           }
 
-          let build = await runBuild(hre.network.name)
+          let build = await runBuild(network)
           if (build !== true) {
             process.exitCode = 1
             return
@@ -152,7 +152,11 @@ const eventsDiff = async (array1: string[], array2: string[]): Promise<string[]>
 
 const updateNetworksFile = async(network: string, dataSource: string, address: string): Promise<void> => {
   await toolbox.patching.update(path.join('subgraph', 'networks.json'), (config: any) => {
-    config[network][dataSource].address = address
+    if(Object.keys(config).includes(network)) {
+      config[network][dataSource].address = address
+    } else {
+      config[network] = { [dataSource]: { address: address } }
+    }
     return config
   })
 }

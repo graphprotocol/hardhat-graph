@@ -32,7 +32,7 @@ export const initSubgraph = async (taskArgs: { contract: string, address: string
       let scaffold = await generateScaffold(
         {
           protocolInstance,
-          network: hre.network.name,
+          network: hre.network.name || hre.config.defaultNetwork,
           subgraphName: path.basename(hre.config.paths.root),
           abi,
           contract: taskArgs.address,
