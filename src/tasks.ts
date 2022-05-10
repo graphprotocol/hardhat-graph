@@ -44,7 +44,7 @@ subtask("init", "Initialize a subgraph")
       return
     }
 
-    let isGitRepo = toolbox.filesystem.exists('.git')
+    let isGitRepo = await checkForRepo()
     if (!isGitRepo) {
       let repo = await initRepository(toolbox)
       if (repo !== true) {
@@ -141,6 +141,19 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
       }
     )
   })
+
+const checkForRepo = async (): Promise<boolean> => {
+  try {
+    let result = await toolbox.system.run('git rev-parse --is-inside-work-tree')
+    return result === 'true'
+  } catch(err: any) {
+    if (err.stderr.includes('not a git repository')) {
+      return false
+    } else {
+      throw Error(err.stderr)
+    }
+  }
+}
 
 const getEvents = async (abi: ethers.utils.Interface): Promise<string[]> => {
   return Object.keys(abi.events)
