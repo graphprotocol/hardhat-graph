@@ -3,8 +3,10 @@ import path from 'path'
 import immutable from 'immutable'
 const graphCli = require('@graphprotocol/graph-cli/src/cli')
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
+const { chooseNodeUrl } = require('@graphprotocol/graph-cli/src/command-helpers/node')
 const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/src/command-helpers/scaffold')
+import { ethers } from 'ethers'
 
 export const initSubgraph = async (taskArgs: { contract: string, address: string }, hre: HardhatRuntimeEnvironment): Promise<boolean> =>
   await withSpinner(
@@ -17,7 +19,13 @@ export const initSubgraph = async (taskArgs: { contract: string, address: string
 
       let contract = await hre.artifacts.readArtifact(taskArgs.contract)
       let abi = new ABI(contract.contractName, undefined, immutable.fromJS(contract.abi))
-
+      let product = hre.config.subgraph?.product || 'subgraph-studio'
+      let { node, allowSimpleName } = chooseNodeUrl({
+        product: product,
+        studio: undefined,
+        node: undefined,
+        allowSimpleName: true
+      })
       // Maybe stuff like subgraphName, node/product, can be configuren in the hardhat.config under subgraph key
       // module.exports = {
       //  solidity: "0.8.4",
@@ -37,12 +45,12 @@ export const initSubgraph = async (taskArgs: { contract: string, address: string
           abi,
           contract: taskArgs.address,
           contractName: contract.contractName,
-          indexEvents: false,
-          node: 'https://api.studio.thegraph.com/deploy/'
+          indexEvents: true,
+          node,
         },
         spinner,
       )
-      await writeScaffold(scaffold, 'subgraph', spinner)
+      await writeScaffold(scaffold, hre.config.paths.subgraph, spinner)
       return true
     }
   )
@@ -80,12 +88,44 @@ export const initGitignore = async (toolbox: any): Promise<boolean> =>
     }
   )
 
-export const runCodegen = async (): Promise<boolean> => {
-  await graphCli.run(['codegen', 'subgraph/subgraph.yaml', '-o', 'subgraph/generated'])
+export const runCodegen = async (hre: HardhatRuntimeEnvironment): Promise<boolean> => {
+  await graphCli.run(['codegen', path.join(hre.config.paths.subgraph, 'subgraph.yaml'), '-o',  path.join(hre.config.paths.subgraph, 'generated')])
   return true
 }
 
-export const runBuild = async(network: string): Promise<boolean> => {
-  await graphCli.run(['build', 'subgraph/subgraph.yaml', '-o', 'subgraph/build', '--network', network, '--networkFile', 'subgraph/networks.json'])
+export const runBuild = async(network: string, hre: HardhatRuntimeEnvironment): Promise<boolean> => {
+  await graphCli.run(['build', path.join(hre.config.paths.subgraph,'subgraph.yaml'), '-o', path.join(hre.config.paths.subgraph,'build'), '--network', network, '--networkFile', path.join(hre.config.paths.subgraph,'networks.json')])
   return true
+}
+
+export const checkForRepo = async (toolbox: any): Promise<boolean> => {
+  try {
+    let result = await toolbox.system.run('git rev-parse --is-inside-work-tree')
+    return result === 'true'
+  } catch(err: any) {
+    if (err.stderr.includes('not a git repository')) {
+      return false
+    } else {
+      throw Error(err.stderr)
+    }
+  }
+}
+
+export const getEvents = async (abi: ethers.utils.Interface): Promise<string[]> => {
+  return Object.keys(abi.events)
+}
+
+export const eventsDiff = async (array1: string[], array2: string[]): Promise<string[]> => {
+  return array1.filter(x => !array2.includes(x))
+}
+
+export const updateNetworksFile = async(network: string, dataSource: string, address: string, hre: HardhatRuntimeEnvironment, toolbox: any): Promise<void> => {
+  await toolbox.patching.update(path.join(hre.config.paths.subgraph, 'networks.json'), (config: any) => {
+    if(Object.keys(config).includes(network)) {
+      config[network][dataSource].address = address
+    } else {
+      config[network] = { [dataSource]: { address: address } }
+    }
+    return config
+  })
 }
