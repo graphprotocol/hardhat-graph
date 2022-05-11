@@ -1,5 +1,5 @@
 import { subtask, task } from 'hardhat/config'
-import { initSubgraph, initRepository, initGitignore, runCodegen, runBuild, checkForRepo, getEvents, eventsDiff, updateNetworksFile } from './task_helpers'
+import { initSubgraph, initRepository, initGitignore, runCodegen, runBuild, checkForRepo, getEvents, eventsDiff, updateNetworksFile } from './task-helpers'
 import * as toolbox from 'gluegun'
 import * as YAML from 'yaml'
 import path from 'path'
