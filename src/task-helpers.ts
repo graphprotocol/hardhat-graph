@@ -19,7 +19,7 @@ export const initSubgraph = async (taskArgs: { contract: string, address: string
 
       let contract = await hre.artifacts.readArtifact(taskArgs.contract)
       let abi = new ABI(contract.contractName, undefined, immutable.fromJS(contract.abi))
-      let product = hre.config.subgraph?.product || 'subgraph-studio'
+      let product = hre.config.subgraph.product || 'subgraph-studio'
       let { node, allowSimpleName } = chooseNodeUrl({
         product: product,
         studio: undefined,
@@ -45,7 +45,7 @@ export const initSubgraph = async (taskArgs: { contract: string, address: string
           abi,
           contract: taskArgs.address,
           contractName: contract.contractName,
-          indexEvents: true,
+          indexEvents: hre.config.subgraph.indexEvents,
           node,
         },
         spinner,
