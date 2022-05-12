@@ -14,7 +14,8 @@ task("graph", "A do all task")
   .addParam("contract", "The name of the contract")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs, hre) => {
-      let subgraph = toolbox.filesystem.exists(hre.config.paths.subgraph) == "dir" && toolbox.filesystem.exists(path.join(hre.config.paths.subgraph, 'subgraph.yaml')) == "file"
+      let directory = hre.config.paths.subgraph
+      let subgraph = toolbox.filesystem.exists(directory) == "dir" && toolbox.filesystem.exists(path.join(directory, 'subgraph.yaml')) == "file"
       let command = subgraph ? "update" : "init"
       let { subtask, ...args } = taskArgs
 
@@ -27,7 +28,9 @@ subtask("init", "Initialize a subgraph")
   .addParam("contract", "The name of the contract")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs, hre) => {
-    if(toolbox.filesystem.exists(hre.config.paths.subgraph) == "dir" && toolbox.filesystem.exists(path.join(hre.config.paths.subgraph, 'subgraph.yaml')) == "file") {
+    const directory = hre.config.paths.subgraph
+
+    if(toolbox.filesystem.exists(directory) == "dir" && toolbox.filesystem.exists(path.join(directory, 'subgraph.yaml')) == "file") {
       toolbox.print.error("Subgraph already exists! Please use the update subtask to update an existing subgraph!")
       process.exit(1)
     }
@@ -38,7 +41,7 @@ subtask("init", "Initialize a subgraph")
       return
     }
 
-    let networkConfig = await initNetworksConfig(toolbox, hre.config.paths.subgraph, 'address')
+    let networkConfig = await initNetworksConfig(toolbox, directory, 'address')
     if (networkConfig !== true) {
       process.exitCode = 1
       return
@@ -60,7 +63,7 @@ subtask("init", "Initialize a subgraph")
       return
     }
 
-    let codegen = await runCodegen(hre)
+    let codegen = await runCodegen(directory)
     if (codegen !== true) {
       process.exitCode = 1
       return
@@ -71,9 +74,11 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
   .addParam("contract", "The name of the contract")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs: any, hre) => {
+    const directory = hre.config.paths.subgraph
     const network = hre.network.name || hre.config.defaultNetwork
-    const subgraph = await toolbox.filesystem.read(path.join(hre.config.paths.subgraph, 'subgraph.yaml'), 'utf8')
-    if (!toolbox.filesystem.exists(hre.config.paths.subgraph) || !subgraph) {
+    const subgraph = await toolbox.filesystem.read(path.join(directory, 'subgraph.yaml'), 'utf8')
+
+    if (!toolbox.filesystem.exists(directory) || !subgraph) {
       toolbox.print.error("No subgraph found! Please first initialize a new subgraph!")
       process.exit(1)
     }
@@ -92,10 +97,10 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
         let manifest = YAML.parse(subgraph)
         let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contract)
         let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == taskArgs.contract)
-        let abiJson = await toolbox.filesystem.read(path.join(hre.config.paths.subgraph, subgraphAbi.file))
+        let abiJson = await toolbox.filesystem.read(path.join(directory, subgraphAbi.file))
 
         if (!abiJson) {
-          toolbox.print.error(`Could not read ${path.join(hre.config.paths.subgraph, subgraphAbi.file)}`)
+          toolbox.print.error(`Could not read ${path.join(directory, subgraphAbi.file)}`)
           process.exit(1)
         }
         // Convert to Interface
@@ -111,12 +116,12 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
 
         // Update the subgraph ABI
         step(spinner, `Updating contract ABI in subgraph`)
-        await toolbox.patching.update(path.join(hre.config.paths.subgraph, subgraphAbi.file), (abi: any) => {
+        await toolbox.patching.update(path.join(directory, subgraphAbi.file), (abi: any) => {
           return contract.abi
         })
 
         step(spinner, `Updating contract's ${network} address in networks.json`)
-        await updateNetworksFile(network, dataSource.name, taskArgs.address, hre, toolbox)
+        await updateNetworksFile(toolbox, network, dataSource.name, taskArgs.address, directory)
 
         step(spinner, `Checking for changes to the contract events`)
         if(newAbiEvents.length != currentAbiEvents.length || newEvents.length != 0 || removedEvents.length != 0) {
@@ -124,13 +129,13 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
             `Contract events have been changed!\nCurrent events:\n ${currentAbiEvents.join('\n ')}\nNew events:\n ${newAbiEvents.join('\n ')}\nPlease address the change in your subgraph.yaml and run graph codegen and graph build from the subgraph folder!`
           )
         } else {
-          let codegen = await runCodegen(hre)
+          let codegen = await runCodegen(directory)
           if (codegen !== true) {
             process.exit(1)
             return
           }
 
-          let build = await runBuild(network, hre)
+          let build = await runBuild(network, directory)
           if (build !== true) {
             process.exitCode = 1
             return

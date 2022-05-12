@@ -19,7 +19,7 @@ export const initSubgraph = async (taskArgs: { contract: string, address: string
 
       let contract = await hre.artifacts.readArtifact(taskArgs.contract)
       let abi = new ABI(contract.contractName, undefined, immutable.fromJS(contract.abi))
-      let product = hre.config.subgraph.product || 'subgraph-studio'
+      let product = hre.config?.subgraph?.product || 'subgraph-studio'
       let { node, allowSimpleName } = chooseNodeUrl({
         product: product,
         studio: undefined,
@@ -45,7 +45,7 @@ export const initSubgraph = async (taskArgs: { contract: string, address: string
           abi,
           contract: taskArgs.address,
           contractName: contract.contractName,
-          indexEvents: hre.config.subgraph.indexEvents,
+          indexEvents: hre.config?.subgraph?.indexEvents,
           node,
         },
         spinner,
@@ -88,13 +88,13 @@ export const initGitignore = async (toolbox: any): Promise<boolean> =>
     }
   )
 
-export const runCodegen = async (hre: HardhatRuntimeEnvironment): Promise<boolean> => {
-  await graphCli.run(['codegen', path.join(hre.config.paths.subgraph, 'subgraph.yaml'), '-o',  path.join(hre.config.paths.subgraph, 'generated')])
+export const runCodegen = async (directory: string): Promise<boolean> => {
+  await graphCli.run(['codegen', path.join(directory, 'subgraph.yaml'), '-o',  path.join(directory, 'generated')])
   return true
 }
 
-export const runBuild = async(network: string, hre: HardhatRuntimeEnvironment): Promise<boolean> => {
-  await graphCli.run(['build', path.join(hre.config.paths.subgraph,'subgraph.yaml'), '-o', path.join(hre.config.paths.subgraph,'build'), '--network', network, '--networkFile', path.join(hre.config.paths.subgraph,'networks.json')])
+export const runBuild = async(network: string, directory: string): Promise<boolean> => {
+  await graphCli.run(['build', path.join(directory,'subgraph.yaml'), '-o', path.join(directory, 'build'), '--network', network, '--networkFile', path.join(directory,'networks.json')])
   return true
 }
 
@@ -119,8 +119,8 @@ export const eventsDiff = async (array1: string[], array2: string[]): Promise<st
   return array1.filter(x => !array2.includes(x))
 }
 
-export const updateNetworksFile = async(network: string, dataSource: string, address: string, hre: HardhatRuntimeEnvironment, toolbox: any): Promise<void> => {
-  await toolbox.patching.update(path.join(hre.config.paths.subgraph, 'networks.json'), (config: any) => {
+export const updateNetworksFile = async(toolbox: any, network: string, dataSource: string, address: string, directory: string): Promise<void> => {
+  await toolbox.patching.update(path.join(directory, 'networks.json'), (config: any) => {
     if(Object.keys(config).includes(network)) {
       config[network][dataSource].address = address
     } else {

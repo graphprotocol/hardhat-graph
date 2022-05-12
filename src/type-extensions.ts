@@ -6,12 +6,12 @@ declare module "hardhat/types/config" {
   }
 
   export interface HardhatConfig {
-    subgraph: Subgraph;
+    subgraph?: Subgraph;
   }
 
   export interface Subgraph {
-    name: string;
-    product: string;
-    indexEvents: boolean;
+    name?: string;
+    product?: string;
+    indexEvents?: boolean;
   }
 }
