@@ -97,12 +97,12 @@ TS: `import 'hardhat-graph'`
 module.exports = {
   ...
   subgraph: {
-    name: 'MySubgraph', # Defaults to the name of the root folder of the hardhat project
-    product: 'hosted-service'/'subgraph-studio', # Defaults to 'subgraph-studio'
-    indexEvents: true/false # Defaults to false
+    name: 'MySubgraph', // Defaults to the name of the root folder of the hardhat project
+    product: 'hosted-service'|'subgraph-studio', // Defaults to 'subgraph-studio'
+    indexEvents: true|false // Defaults to false
   },
   paths: {
-    subgraph: './path/to/subgraph' # Defaults to './subgraph'
+    subgraph: './path/to/subgraph' // Defaults to './subgraph'
   }
 }
 ```
