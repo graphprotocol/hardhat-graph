@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 
-export const compareAbiEvents = async(toolbox: any, dataSource: any, newAbiJson: any, currentAbiJson: any): Promise<boolean> => {
+export const compareAbiEvents = async(spinner: any, toolbox: any, dataSource: any, newAbiJson: any, currentAbiJson: any): Promise<boolean> => {
   // Convert to Interface
   let newAbi = new ethers.utils.Interface(newAbiJson)
   // Get events signatures
@@ -14,12 +14,11 @@ export const compareAbiEvents = async(toolbox: any, dataSource: any, newAbiJson:
   let changed = newAbiEvents.length != currentAbiEvents.length || changedEvents.length != 0
 
   if(changed) {
-    toolbox.print.warning(
+    spinner.warn(
       `Contract events have been changed!\n
-      Current events:\n
-      ${currentAbiEvents.join('\n')}\n
-      New events:\n ${newAbiEvents.join('\n')}\n
-      Please address the change in your subgraph.yaml and run graph codegen and graph build from the subgraph folder!`.replace(' ', '')
+      Current events:\n${currentAbiEvents.join('\n')}\n
+      New events:\n${newAbiEvents.join('\n')}\n
+      Please address the change in your subgraph.yaml and run graph codegen and graph build from the subgraph folder!`.replace(/[ ]{2,}/g, '')
     )
   }
 

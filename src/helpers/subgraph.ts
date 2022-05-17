@@ -16,22 +16,18 @@ export const initSubgraph = async (taskArgs: { contract: string, address: string
     async (spinner: any) => {
       let protocolInstance = new Protocol('ethereum')
       let ABI = protocolInstance.getABI()
-
       let contract = await hre.artifacts.readArtifact(taskArgs.contract)
       let abi = new ABI(contract.contractName, undefined, immutable.fromJS(contract.abi))
-      let product = hre.config?.subgraph?.product || 'subgraph-studio'
       let { node, allowSimpleName } = chooseNodeUrl({
-        product: product,
-        studio: undefined,
-        node: undefined,
-        allowSimpleName: true
+        product: hre.config.subgraph?.product,
+        allowSimpleName: hre.config.subgraph?.allowSimpleName
       })
 
       let scaffold = await generateScaffold(
         {
           protocolInstance,
           network: hre.network.name || hre.config.defaultNetwork,
-          subgraphName: hre.config.subgraph?.name || path.basename(hre.config.paths.root),
+          subgraphName: hre.config.subgraph?.name,
           abi,
           contract: taskArgs.address,
           contractName: contract.contractName,

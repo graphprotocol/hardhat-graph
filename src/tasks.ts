@@ -107,7 +107,7 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
         await updateNetworksFile(toolbox, network, dataSource.name, taskArgs.address, directory)
 
         step(spinner, `Checking events for changes`)
-        let eventsChanged = await compareAbiEvents(toolbox, dataSource, contract.abi, currentAbiJson)
+        let eventsChanged = await compareAbiEvents(spinner, toolbox, dataSource, contract.abi, currentAbiJson)
         if(eventsChanged) {
           process.exit(1)
         }
