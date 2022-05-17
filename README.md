@@ -99,7 +99,8 @@ module.exports = {
   subgraph: {
     name: 'MySubgraph', // Defaults to the name of the root folder of the hardhat project
     product: 'hosted-service'|'subgraph-studio', // Defaults to 'subgraph-studio'
-    indexEvents: true|false // Defaults to false
+    indexEvents: true|false, // Defaults to false
+    allowSimpleName: true|false // Defaults to `false` if product is `hosted-service` and `true` if product is `subgraph-studio`
   },
   paths: {
     subgraph: './path/to/subgraph' // Defaults to './subgraph'
