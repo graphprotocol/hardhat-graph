@@ -13,5 +13,6 @@ declare module "hardhat/types/config" {
     name?: string;
     product?: string;
     indexEvents?: boolean;
+    allowSimpleName?: boolean;
   }
 }

@@ -1,17 +1,18 @@
-import { subtask, task } from 'hardhat/config'
-import { initSubgraph, initRepository, initGitignore, runCodegen, runBuild, checkForRepo, getEvents, eventsDiff, updateNetworksFile } from './task-helpers'
-import * as toolbox from 'gluegun'
-import * as YAML from 'yaml'
 import path from 'path'
+import * as YAML from 'yaml'
 import immutable from 'immutable'
-import { ethers } from 'ethers'
-import { spawn } from 'child_process'
+import * as toolbox from 'gluegun'
+import { subtask, task } from 'hardhat/config'
+import { compareAbiEvents } from './helpers/events'
+import { checkForRepo, initRepository, initGitignore } from './helpers/git'
+import { initSubgraph, runCodegen, runBuild, updateNetworksFile } from './helpers/subgraph'
+
 const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 const { initNetworksConfig } = require('@graphprotocol/graph-cli/src/command-helpers/network')
 
 task("graph", "A do all task")
   .addOptionalPositionalParam("subtask", "Specify which subtask to execute")
-  .addParam("contract", "The name of the contract")
+  .addParam("contractName", "The name of the contract")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs, hre) => {
       let directory = hre.config.paths.subgraph
@@ -25,7 +26,7 @@ task("graph", "A do all task")
 
 /// MAYBE INIT AND UPDATE SHOULD NOT BE SUBTASKS BUT JUST FUNCTIONS?
 subtask("init", "Initialize a subgraph")
-  .addParam("contract", "The name of the contract")
+  .addParam("contractName", "The name of the contract")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
@@ -37,41 +38,36 @@ subtask("init", "Initialize a subgraph")
 
     let scaffold = await initSubgraph(taskArgs, hre)
     if (scaffold !== true) {
-      process.exitCode = 1
-      return
+      process.exit(1)
     }
 
     let networkConfig = await initNetworksConfig(toolbox, directory, 'address')
     if (networkConfig !== true) {
-      process.exitCode = 1
-      return
+      process.exit(1)
     }
 
     let isGitRepo = await checkForRepo(toolbox)
     if (!isGitRepo) {
       let repo = await initRepository(toolbox)
       if (repo !== true) {
-        process.exitCode = 1
-        return
+        process.exit(1)
       }
     }
 
     // Maybe Not needed?
     let gitignore = await initGitignore(toolbox)
     if (gitignore !== true) {
-      process.exitCode = 1
-      return
+      process.exit(1)
     }
 
     let codegen = await runCodegen(directory)
     if (codegen !== true) {
-      process.exitCode = 1
-      return
+      process.exit(1)
     }
   })
 
 subtask("update", "Updates an existing subgraph from artifact or contract address")
-  .addParam("contract", "The name of the contract")
+  .addParam("contractName", "The name of the contract")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs: any, hre) => {
     const directory = hre.config.paths.subgraph
@@ -88,33 +84,20 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
       `Failed to update subgraph`,
       `Warnings while updating subgraph`,
       async (spinner: any) => {
-        // New contract version
         step(spinner, `Fetching new contract version`)
-        let contract = await hre.artifacts.readArtifact(taskArgs.contract)
+        let contract = await hre.artifacts.readArtifact(taskArgs.contractName)
 
-        // Old contract version
         step(spinner, `Fetching current contract version from subgraph`)
         let manifest = YAML.parse(subgraph)
-        let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contract)
-        let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == taskArgs.contract)
-        let abiJson = await toolbox.filesystem.read(path.join(directory, subgraphAbi.file))
+        let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contractName)
+        let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == taskArgs.contractName)
+        let currentAbiJson = await toolbox.filesystem.read(path.join(directory, subgraphAbi.file))
 
-        if (!abiJson) {
+        if (!currentAbiJson) {
           toolbox.print.error(`Could not read ${path.join(directory, subgraphAbi.file)}`)
           process.exit(1)
         }
-        // Convert to Interface
-        let newAbi = new ethers.utils.Interface(contract.abi)
-        let currentAbi = new ethers.utils.Interface(abiJson)
 
-        // Fetch new events from Interface
-        let newAbiEvents = await getEvents(newAbi)
-        // Fetch current dataSource events from subgraph.yaml
-        let currentAbiEvents = dataSource.mapping.eventHandlers.map((handler: { event: string }) => { return handler.event })
-        let newEvents = await eventsDiff(newAbiEvents, currentAbiEvents)
-        let removedEvents = await eventsDiff(currentAbiEvents, newAbiEvents)
-
-        // Update the subgraph ABI
         step(spinner, `Updating contract ABI in subgraph`)
         await toolbox.patching.update(path.join(directory, subgraphAbi.file), (abi: any) => {
           return contract.abi
@@ -123,22 +106,20 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
         step(spinner, `Updating contract's ${network} address in networks.json`)
         await updateNetworksFile(toolbox, network, dataSource.name, taskArgs.address, directory)
 
-        step(spinner, `Checking for changes to the contract events`)
-        if(newAbiEvents.length != currentAbiEvents.length || newEvents.length != 0 || removedEvents.length != 0) {
-          toolbox.print.warning(
-            `Contract events have been changed!\nCurrent events:\n ${currentAbiEvents.join('\n ')}\nNew events:\n ${newAbiEvents.join('\n ')}\nPlease address the change in your subgraph.yaml and run graph codegen and graph build from the subgraph folder!`
-          )
-        } else {
+        step(spinner, `Checking events for changes`)
+        let eventsChanged = await compareAbiEvents(spinner, toolbox, dataSource, contract.abi, currentAbiJson)
+        if(eventsChanged) {
+          process.exit(1)
+        }
+         else {
           let codegen = await runCodegen(directory)
           if (codegen !== true) {
             process.exit(1)
-            return
           }
 
           let build = await runBuild(network, directory)
           if (build !== true) {
-            process.exitCode = 1
-            return
+            process.exit(1)
           }
         }
         return true
