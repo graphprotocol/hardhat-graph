@@ -8,36 +8,48 @@ const { chooseNodeUrl } = require('@graphprotocol/graph-cli/src/command-helpers/
 const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/src/command-helpers/scaffold')
 
-export const initSubgraph = async (taskArgs: { contract: string, address: string }, hre: HardhatRuntimeEnvironment): Promise<boolean> =>
+export const initSubgraph = async (taskArgs: { contractName: string, address: string }, hre: HardhatRuntimeEnvironment): Promise<boolean> =>
   await withSpinner(
     `Create subgraph scaffold`,
     `Failed to create subgraph scaffold`,
     `Warnings while creating subgraph scaffold`,
     async (spinner: any) => {
+      let node
+      let { contractName, address } = taskArgs
+      let subgraphPath = hre.config.paths.subgraph!
+      let network = hre.network.name || hre.config.defaultNetwork
+      let {
+        name,
+        product,
+        indexEvents,
+        allowSimpleName,
+      } = hre.config.subgraph!
+
+      ;({ node, allowSimpleName } = chooseNodeUrl({ product, allowSimpleName }))
+
+      validateSubgraphName(name!, allowSimpleName)
+      validateProduct(product!)
+
       let protocolInstance = new Protocol('ethereum')
       let ABI = protocolInstance.getABI()
-      let contract = await hre.artifacts.readArtifact(taskArgs.contract)
-      let abi = new ABI(contract.contractName, undefined, immutable.fromJS(contract.abi))
-      let { node, allowSimpleName } = chooseNodeUrl({
-        product: hre.config.subgraph?.product,
-        allowSimpleName: hre.config.subgraph?.allowSimpleName
-      })
+      let artifact = await hre.artifacts.readArtifact(contractName)
+      let abi = new ABI(contractName, undefined, immutable.fromJS(artifact.abi))
 
       let scaffold = await generateScaffold(
         {
           protocolInstance,
-          network: hre.network.name || hre.config.defaultNetwork,
-          subgraphName: hre.config.subgraph?.name,
+          network,
+          subgraphName: name,
           abi,
-          contract: taskArgs.address,
-          contractName: contract.contractName,
-          indexEvents: hre.config.subgraph?.indexEvents,
+          contract: address,
+          contractName,
+          indexEvents,
           node,
         },
         spinner,
       )
 
-      await writeScaffold(scaffold, hre.config.paths.subgraph, spinner)
+      await writeScaffold(scaffold, subgraphPath, spinner)
 
       return true
     }
@@ -62,4 +74,43 @@ export const runCodegen = async (directory: string): Promise<boolean> => {
 export const runBuild = async(network: string, directory: string): Promise<boolean> => {
   await graphCli.run(['build', path.join(directory,'subgraph.yaml'), '-o', path.join(directory, 'build'), '--network', network, '--networkFile', path.join(directory,'networks.json')])
   return true
+}
+
+const validateSubgraphName = (name: string, allowSimpleName: boolean | undefined): void => {
+  if (name.split('/').length !== 2 && !allowSimpleName) {
+    throw new Error(
+`Subgraph name "${name}" needs to have the format "<PREFIX>/${name}".
+When using the Hosted Service at https://thegraph.com, <PREFIX> is the
+name of your GitHub user or organization. You can configure the name in the hardhat.config:
+
+module.exports = {
+  ...
+  subgraph: {
+    ...
+    product: 'hosted-service',
+    name: '<PREFIX>/${name}',
+    ...
+  },
+}
+
+Or you can bypass this check by setting allowSimpleName to true in the hardhat.config:
+module.exports = {
+  ...
+  subgraph: {
+    ...
+    product: 'hosted-service',
+    allowSimpleName: true,
+    ...
+  },
+}`)
+  }
+}
+
+
+export const validateProduct = (product: string): void => {
+  let availableProducts = ['subgraph-studio', 'hosted-service']
+
+  if (!availableProducts.includes(product)) {
+    throw new Error(`Unsupported product ${product}. Currently available products are ${availableProducts.join(' and ')}`)
+  }
 }

@@ -9,7 +9,12 @@ extendConfig((config) => {
     config.paths.subgraph = './subgraph'
   }
 
-  if(!config.subgraph) config.subgraph = {}
-  if(!config.subgraph.product) config.subgraph.product = 'subgraph-studio'
-  if(!config.subgraph.name) config.subgraph.name = path.basename(config.paths.root)
+   let defaultConfig = {
+     name: path.basename(config.paths.root),
+     product: 'subgraph-studio',
+     allowSimpleName: false,
+     indexEvents: false,
+  }
+
+  config.subgraph = Object.assign(defaultConfig, config.subgraph)
 })

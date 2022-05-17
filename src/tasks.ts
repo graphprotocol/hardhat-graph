@@ -12,7 +12,7 @@ const { initNetworksConfig } = require('@graphprotocol/graph-cli/src/command-hel
 
 task("graph", "A do all task")
   .addOptionalPositionalParam("subtask", "Specify which subtask to execute")
-  .addParam("contract", "The name of the contract")
+  .addParam("contractName", "The name of the contract")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs, hre) => {
       let directory = hre.config.paths.subgraph
@@ -26,7 +26,7 @@ task("graph", "A do all task")
 
 /// MAYBE INIT AND UPDATE SHOULD NOT BE SUBTASKS BUT JUST FUNCTIONS?
 subtask("init", "Initialize a subgraph")
-  .addParam("contract", "The name of the contract")
+  .addParam("contractName", "The name of the contract")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
@@ -67,7 +67,7 @@ subtask("init", "Initialize a subgraph")
   })
 
 subtask("update", "Updates an existing subgraph from artifact or contract address")
-  .addParam("contract", "The name of the contract")
+  .addParam("contractName", "The name of the contract")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs: any, hre) => {
     const directory = hre.config.paths.subgraph
@@ -85,12 +85,12 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
       `Warnings while updating subgraph`,
       async (spinner: any) => {
         step(spinner, `Fetching new contract version`)
-        let contract = await hre.artifacts.readArtifact(taskArgs.contract)
+        let contract = await hre.artifacts.readArtifact(taskArgs.contractName)
 
         step(spinner, `Fetching current contract version from subgraph`)
         let manifest = YAML.parse(subgraph)
-        let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contract)
-        let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == taskArgs.contract)
+        let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contractName)
+        let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == taskArgs.contractName)
         let currentAbiJson = await toolbox.filesystem.read(path.join(directory, subgraphAbi.file))
 
         if (!currentAbiJson) {
