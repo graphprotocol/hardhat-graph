@@ -83,10 +83,27 @@ npm >7 should auto-install peerDependencies from plugins, but if they are not or
 ```
 to the hardhat project package.json
 
-The plugin can be installed from the branch:
+The plugin can be installed from the repo:
+```json
+{
+  ...
+  "devDependencies": {
+    "hardhat-graph": "https://github.com/graphprotocol/hardhat-graph"
+    ...
+  }
+}
 ```
-"hardhat-graph": "https://github.com/graphprotocol/hardhat-graph#add-init-and-update"
+or from a specific branch:
+```json
+{
+  ...
+  "devDependencies": {
+    "hardhat-graph": "https://github.com/graphprotocol/hardhat-graph#branch_name"
+    ...
+  }
+}
 ```
+
 Import the plugin in your `hardhat.config` file:
 JS: `require('hardhat-graph')`
 TS: `import 'hardhat-graph'`
