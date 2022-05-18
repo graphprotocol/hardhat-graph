@@ -84,6 +84,7 @@ npm >7 should auto-install peerDependencies from plugins, but if they are not or
 to the hardhat project package.json
 
 The plugin can be installed from the repo:
+
 ```json
 {
   ...
@@ -93,7 +94,9 @@ The plugin can be installed from the repo:
   }
 }
 ```
+
 or from a specific branch:
+
 ```json
 {
   ...
