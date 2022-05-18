@@ -1,7 +1,7 @@
 # Hardhat-graph
 
 ## `init` subtask:
-  - Expects two string parameters: `contract: 'contractName'` and `address: '0x123..`
+  - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..`
   - Workflow:
     - Generates a subgraph in `./subgraph` using `generateScaffold` from `graph-cli`
     - Generates a network.json file in `./subgraph` using `initNetworksConfig` from `graph-cli`
@@ -13,7 +13,7 @@
 async function deploy(contractName: string) {
   ....
   await contract.deployed();
-  return { contract: contractName , address: contract.address}
+  return { contractName: contractName , address: contract.address}
 }
 
 deploy()
@@ -26,7 +26,7 @@ deploy()
 ```
 
 ## `update` subtask:
-  - Expects two string parameters: `contract: 'contractName'` and `address: '0x123..`
+  - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..`
   - Workflow:
     - Updates the contract ABI in `./subgraph/abis`
     - Updates the contract Address in `network.json` if it's deployed to the same network. If the contract has been deployed to a network that is not present in the config file, adds an entry for the new network.
@@ -37,7 +37,7 @@ deploy()
 async function deploy(contractName: string) {
   ....
   await contract.deployed();
-  return { contract: contractName , address: contract.address}
+  return { contractName: contractName , address: contract.address}
 }
 
 deploy()
@@ -50,7 +50,7 @@ deploy()
 ```
 
 ## `graph` subtask:
-  - Expects two string parameters: `contract: 'contractName'` and `address: '0x123..` and an optional positional parameter `subtask` <init|update>.
+  - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..` and an optional positional parameter `subtask` <init|update>.
   - Workflow:
     - Conditionally runs either `init` or `update` subtask depending if a subgraph already exists or not. If the optional param `subtask` is passed it will run that subtask instead.
   - Example usage:
@@ -58,7 +58,7 @@ deploy()
 async function deploy(contractName: string) {
   ....
   await contract.deployed();
-  return { contract: contractName , address: contract.address}
+  return { contractName: MyContract , address: contract.address}
 }
 
 deploy()
@@ -71,7 +71,7 @@ deploy()
 ```
 or
 ```sh
-npx hardhat graph <init|update> --contract ContractName --address 0x123... # the subtask parameter is optional
+npx hardhat graph <init|update> --contract-name MyContract --address 0x123... # the subtask parameter is optional
 ```
 
 ## How to try it out:
