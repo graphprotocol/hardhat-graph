@@ -55,7 +55,7 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
     }
   )
 
-export const updateNetworksFile = async(toolbox: any, network: string, dataSource: string, address: string, directory: string): Promise<void> => {
+export const updateNetworksFile = async (toolbox: any, network: string, dataSource: string, address: string, directory: string): Promise<void> => {
   await toolbox.patching.update(path.join(directory, 'networks.json'), (config: any) => {
     if(Object.keys(config).includes(network)) {
       config[network][dataSource].address = address
@@ -71,9 +71,13 @@ export const runCodegen = async (directory: string): Promise<boolean> => {
   return true
 }
 
-export const runBuild = async(network: string, directory: string): Promise<boolean> => {
-  await graphCli.run(['build', path.join(directory,'subgraph.yaml'), '-o', path.join(directory, 'build'), '--network', network, '--networkFile', path.join(directory,'networks.json')])
+export const runBuild = async (network: string, directory: string): Promise<boolean> => {
+  await graphCli.run(['build', path.join(directory, 'subgraph.yaml'), '-o', path.join(directory, 'build'), '--network', network, '--networkFile', path.join(directory, 'networks.json')])
   return true
+}
+
+export const runGraphAdd = async (taskArgs: { contractName: string, address: string }, directory: string) => {
+  await graphCli.run(['add'], path.join(directory, 'subgraph.yaml'))
 }
 
 const validateSubgraphName = (name: string, allowSimpleName: boolean | undefined): void => {
