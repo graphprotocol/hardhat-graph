@@ -31,8 +31,8 @@
     "yaml": "^2.0.1"
   },
   "peerDependencies": {
-    "@graphprotocol/graph-cli": ">=0.26.0",
-    "@graphprotocol/graph-ts": ">=0.24.0",
+    "@graphprotocol/graph-cli": ">=0.30.0",
+    "@graphprotocol/graph-ts": ">=0.27.0",
     "hardhat": ">=2.9.0"
   }
 }
