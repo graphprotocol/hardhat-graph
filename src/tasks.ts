@@ -126,7 +126,7 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
     )
   })
 
-subtask("add", "Add a datasource to the project")
+task("add", "Add a datasource to the project")
   .addParam("address", "The address of the contract")
   .addOptionalParam("contractName", "The name of the contract", "Contract")
   .addOptionalParam("mergeEntities", "Whether the entities should be merged")
