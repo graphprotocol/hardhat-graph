@@ -5,7 +5,7 @@ import * as toolbox from 'gluegun'
 import { subtask, task } from 'hardhat/config'
 import { compareAbiEvents } from './helpers/events'
 import { checkForRepo, initRepository, initGitignore } from './helpers/git'
-import { initSubgraph, runCodegen, runBuild, updateNetworksFile } from './helpers/subgraph'
+import { initSubgraph, runCodegen, runBuild, updateNetworksFile, runGraphAdd } from './helpers/subgraph'
 
 const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 const { initNetworksConfig } = require('@graphprotocol/graph-cli/src/command-helpers/network')
@@ -150,6 +150,7 @@ task("add", "Add a datasource to the project")
         let manifest = YAML.parse(subgraph)
         console.log(`cn: ${taskArgs.contractName}\naddress: ${taskArgs.address}\nmerge: ${taskArgs.mergeEntities}\nabi: ${taskArgs.abi}`)
         let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contractName)
+        runGraphAdd(taskArgs, directory)
         return true
       }
     )
