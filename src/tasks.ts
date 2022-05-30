@@ -148,9 +148,9 @@ task("add", "Add a datasource to the project")
       async (spinner: any) => {
         step(spinner, `Fetching current contract version from subgraph`)
         let manifest = YAML.parse(subgraph)
-        console.log(`cn: ${taskArgs.contractName}\naddress: ${taskArgs.address}\nmerge: ${taskArgs.mergeEntities}\nabi: ${taskArgs.abi}`)
+        console.log(`\ndir: ${directory}\ncn: ${taskArgs.contractName}\naddress: ${taskArgs.address}\nmerge: ${taskArgs.mergeEntities}\nabi: ${taskArgs.abi}`)
         let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contractName)
-        runGraphAdd(taskArgs, directory)
+        await runGraphAdd(taskArgs, directory)
         return true
       }
     )
