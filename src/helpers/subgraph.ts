@@ -43,6 +43,7 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
           abi,
           contract: address,
           contractName,
+          dataSourceName: contractName,
           indexEvents,
           node,
         },
