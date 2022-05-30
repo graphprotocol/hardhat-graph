@@ -133,7 +133,6 @@ task("add", "Add a datasource to the project")
   .addOptionalParam("abi", "Path to local abi file")
   .setAction(async (taskArgs: any, hre) => {
     const directory = hre.config.paths.subgraph
-    const network = hre.network.name || hre.config.defaultNetwork
     const subgraph = toolbox.filesystem.read(path.join(directory, 'subgraph.yaml'), 'utf8')
 
     if (!toolbox.filesystem.exists(directory) || !subgraph) {

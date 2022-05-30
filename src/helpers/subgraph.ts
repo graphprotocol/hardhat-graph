@@ -85,7 +85,7 @@ export const runGraphAdd = async (taskArgs: { contractName: string, address: str
     commandLine.push('--merge-entities')
   }
   if (taskArgs.abi) {
-    commandLine.push('-abi', taskArgs.abi)
+    commandLine.push('--abi', taskArgs.abi)
   }
   if (taskArgs.help) {
     commandLine.push('-h')
