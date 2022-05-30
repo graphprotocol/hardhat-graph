@@ -13,7 +13,7 @@
     "README.md"
   ],
   "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.29.0",
+    "@graphprotocol/graph-cli": "^0.30.0",
     "@graphprotocol/graph-ts": "^0.26.0",
     "hardhat": "^2.9.3",
     "@types/mocha": "^9.0.0",

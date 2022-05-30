@@ -78,7 +78,7 @@ export const runBuild = async (network: string, directory: string): Promise<bool
 
 //0xC75650fe4D14017b1e12341A97721D5ec51D5340
 export const runGraphAdd = async (taskArgs: { contractName: string, address: string, mergeEntities: boolean, abi: string, help: boolean }, directory: string) => {
-  let commandLine = ['build', taskArgs.address, path.join(directory, 'subgraph.yaml')]
+  let commandLine = ['add', taskArgs.address, path.join(directory, 'subgraph.yaml')]
   if (taskArgs.mergeEntities) {
     commandLine.push('--merge-entities')
   }
