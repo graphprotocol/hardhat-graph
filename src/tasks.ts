@@ -126,7 +126,7 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
     )
   })
 
-task("add", "Add a datasource to the project")
+subtask("add", "Add a datasource to the project")
   .addParam("address", "The address of the contract")
   .addOptionalParam("contractName", "The name of the contract", "Contract")
   .addOptionalParam("mergeEntities", "Whether the entities should be merged")
@@ -142,14 +142,14 @@ task("add", "Add a datasource to the project")
     }
 
     await withSpinner(
-      `Update subgraph`,
-      `Failed to update subgraph`,
-      `Warnings while updating subgraph`,
+      `Add a new datasource`,
+      `Failed to add a new datasource`,
+      `Warnings while adding a new datasource`,
       async (spinner: any) => {
-        step(spinner, `Fetching current contract version from subgraph`)
-        let manifest = YAML.parse(subgraph)
+        step(spinner, `Initiating graph add command`)
+        // let manifest = YAML.parse(subgraph)
         console.log(`\ndir: ${directory}\ncn: ${taskArgs.contractName}\naddress: ${taskArgs.address}\nmerge: ${taskArgs.mergeEntities}\nabi: ${taskArgs.abi}`)
-        let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contractName)
+        // let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contractName)
         await runGraphAdd(taskArgs, directory)
         return true
       }
