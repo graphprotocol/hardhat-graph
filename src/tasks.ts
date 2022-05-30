@@ -54,6 +54,14 @@ subtask("init", "Initialize a subgraph")
       }
     }
 
+    // Generate matchstick.yaml
+    toolbox.filesystem.file('matchstick.yaml', {
+      content: YAML.stringify({
+        testsFolder: `${directory}/tests`,
+        manifestPath: `${directory}/subgraph.yaml`
+      })
+    })
+
     // Maybe Not needed?
     let gitignore = await initGitignore(toolbox)
     if (gitignore !== true) {

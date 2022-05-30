@@ -78,10 +78,10 @@ npx hardhat graph <init|update> --contract-name MyContract --address 0x123... # 
 NOTE:
 npm >7 should auto-install peerDependencies from plugins, but if they are not or you're using `yarn`, add
 ```
-"@graphprotocol/graph-cli": "^0.29.0",
-"@graphprotocol/graph-ts": "^0.26.0"
+"@graphprotocol/graph-cli": "^0.30.0",
+"@graphprotocol/graph-ts": "^0.27.0",
 ```
-to the hardhat project package.json
+to the hardhat project package.json (Because the `graph add` command was added in version 0.30.0, this is also the minimum required version)
 
 The plugin can be installed from the repo:
 
