@@ -109,8 +109,7 @@ export const runGraphAdd = async (taskArgs: { contractName: string, address: str
       commandLine.push('--abi', taskArgs.abi)
     }  
   }
-  console.log(taskArgs)
-  console.log(commandLine)
+
   await graphCli.run(commandLine)
 }
 
