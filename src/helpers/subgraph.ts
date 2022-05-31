@@ -3,6 +3,7 @@ import immutable from 'immutable'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
 const process = require('process');
+const fs = require('fs')
 const graphCli = require('@graphprotocol/graph-cli/src/cli')
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
 const { chooseNodeUrl } = require('@graphprotocol/graph-cli/src/command-helpers/node')
@@ -69,20 +70,26 @@ export const updateNetworksFile = async (toolbox: any, network: string, dataSour
 }
 
 export const runCodegen = async (directory: string): Promise<boolean> => {
-  process.chdir(directory)
+  if (fs.existsSync(directory)) {
+    process.chdir(directory)
+  }
   await graphCli.run(['codegen'])
   return true
 }
 
 export const runBuild = async (network: string, directory: string): Promise<boolean> => {
-  process.chdir(directory)
+  if (fs.existsSync(directory)) {
+    process.chdir(directory)
+  }
   await graphCli.run(['build', '--network', network])
   return true
 }
 
 export const runGraphAdd = async (taskArgs: { contractName: string, address: string,
   mergeEntities: boolean, abi: string, subgraphYaml: string }, directory: string) => {
-  process.chdir(directory)
+  if (fs.existsSync(directory)) {
+    process.chdir(directory)
+  }
   
   let commandLine = ['add', taskArgs.address]
   if (taskArgs.subgraphYaml.includes(directory)) {
@@ -102,7 +109,8 @@ export const runGraphAdd = async (taskArgs: { contractName: string, address: str
       commandLine.push('--abi', taskArgs.abi)
     }  
   }
-
+  console.log(taskArgs)
+  console.log(commandLine)
   await graphCli.run(commandLine)
 }
 
