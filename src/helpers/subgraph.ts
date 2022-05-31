@@ -1,8 +1,8 @@
 import path from 'path'
 import immutable from 'immutable'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-const process = require('process');
 
+const process = require('process');
 const graphCli = require('@graphprotocol/graph-cli/src/cli')
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
 const { chooseNodeUrl } = require('@graphprotocol/graph-cli/src/command-helpers/node')
@@ -44,6 +44,7 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
           abi,
           contract: address,
           contractName,
+          dataSourceName: contractName,
           indexEvents,
           node,
         },
@@ -77,8 +78,8 @@ export const runBuild = async (network: string, directory: string): Promise<bool
   return true
 }
 
-//0xC75650fe4D14017b1e12341A97721D5ec51D5340
-export const runGraphAdd = async (taskArgs: { contractName: string, address: string, mergeEntities: boolean, abi: string, help: boolean }, directory: string) => {
+export const runGraphAdd = async (taskArgs: { contractName: string, address: string,
+  mergeEntities: boolean, abi: string, help: boolean }, directory: string) => {
   process.chdir(directory)
   
   let commandLine = ['add', taskArgs.address, 'subgraph.yaml']
@@ -87,7 +88,6 @@ export const runGraphAdd = async (taskArgs: { contractName: string, address: str
   }
   if (taskArgs.abi) {
     if (taskArgs.abi.includes(directory)) {
-      console.log(path.normalize(taskArgs.abi.replace(directory, '')))
       commandLine.push('--abi', path.normalize(taskArgs.abi.replace(directory, '')))
     } else {
       commandLine.push('--abi', taskArgs.abi)

@@ -54,6 +54,14 @@ subtask("init", "Initialize a subgraph")
       }
     }
 
+    // Generate matchstick.yaml
+    toolbox.filesystem.file('matchstick.yaml', {
+      content: YAML.stringify({
+        testsFolder: `${directory}/tests`,
+        manifestPath: `${directory}/subgraph.yaml`
+      })
+    })
+
     // Maybe Not needed?
     let gitignore = await initGitignore(toolbox)
     if (gitignore !== true) {
@@ -146,9 +154,6 @@ task("add", "Add a datasource to the project")
       `Warnings while adding a new datasource`,
       async (spinner: any) => {
         step(spinner, `Initiating graph add command`)
-        // let manifest = YAML.parse(subgraph)
-        console.log(`\ndir: ${directory}\ncn: ${taskArgs.contractName}\naddress: ${taskArgs.address}\nmerge: ${taskArgs.mergeEntities}\nabi: ${taskArgs.abi}`)
-        // let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contractName)
         await runGraphAdd(taskArgs, directory)
         return true
       }
