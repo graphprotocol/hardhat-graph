@@ -2,6 +2,8 @@ import path from 'path'
 import immutable from 'immutable'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
+const process = require('process');
+const fs = require('fs')
 const graphCli = require('@graphprotocol/graph-cli/src/cli')
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
 const { chooseNodeUrl } = require('@graphprotocol/graph-cli/src/command-helpers/node')
@@ -56,7 +58,7 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
     }
   )
 
-export const updateNetworksFile = async(toolbox: any, network: string, dataSource: string, address: string, directory: string): Promise<void> => {
+export const updateNetworksFile = async (toolbox: any, network: string, dataSource: string, address: string, directory: string): Promise<void> => {
   await toolbox.patching.update(path.join(directory, 'networks.json'), (config: any) => {
     if(Object.keys(config).includes(network)) {
       config[network][dataSource].address = address
@@ -68,13 +70,47 @@ export const updateNetworksFile = async(toolbox: any, network: string, dataSourc
 }
 
 export const runCodegen = async (directory: string): Promise<boolean> => {
-  await graphCli.run(['codegen', path.join(directory, 'subgraph.yaml'), '-o',  path.join(directory, 'generated')])
+  if (fs.existsSync(directory)) {
+    process.chdir(directory)
+  }
+  await graphCli.run(['codegen'])
   return true
 }
 
-export const runBuild = async(network: string, directory: string): Promise<boolean> => {
-  await graphCli.run(['build', path.join(directory,'subgraph.yaml'), '-o', path.join(directory, 'build'), '--network', network, '--networkFile', path.join(directory,'networks.json')])
+export const runBuild = async (network: string, directory: string): Promise<boolean> => {
+  if (fs.existsSync(directory)) {
+    process.chdir(directory)
+  }
+  await graphCli.run(['build', '--network', network])
   return true
+}
+
+export const runGraphAdd = async (taskArgs: { contractName: string, address: string,
+  mergeEntities: boolean, abi: string, subgraphYaml: string }, directory: string) => {
+  if (fs.existsSync(directory)) {
+    process.chdir(directory)
+  }
+  
+  let commandLine = ['add', taskArgs.address]
+  if (taskArgs.subgraphYaml.includes(directory)) {
+    commandLine.push(path.normalize(taskArgs.subgraphYaml.replace(directory, '')))
+  } else {
+    commandLine.push(taskArgs.subgraphYaml)
+  }
+
+  if (taskArgs.mergeEntities) {
+    commandLine.push('--merge-entities')
+  }
+
+  if (taskArgs.abi) {
+    if (taskArgs.abi.includes(directory)) {
+      commandLine.push('--abi', path.normalize(taskArgs.abi.replace(directory, '')))
+    } else {
+      commandLine.push('--abi', taskArgs.abi)
+    }  
+  }
+
+  await graphCli.run(commandLine)
 }
 
 const validateSubgraphName = (name: string, allowSimpleName: boolean | undefined): void => {

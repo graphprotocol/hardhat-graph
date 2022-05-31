@@ -5,7 +5,7 @@ import * as toolbox from 'gluegun'
 import { subtask, task } from 'hardhat/config'
 import { compareAbiEvents } from './helpers/events'
 import { checkForRepo, initRepository, initGitignore } from './helpers/git'
-import { initSubgraph, runCodegen, runBuild, updateNetworksFile } from './helpers/subgraph'
+import { initSubgraph, runCodegen, runBuild, updateNetworksFile, runGraphAdd } from './helpers/subgraph'
 
 const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 const { initNetworksConfig } = require('@graphprotocol/graph-cli/src/command-helpers/network')
@@ -31,7 +31,7 @@ subtask("init", "Initialize a subgraph")
   .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
 
-    if(toolbox.filesystem.exists(directory) == "dir" && toolbox.filesystem.exists(path.join(directory, 'subgraph.yaml')) == "file") {
+    if (toolbox.filesystem.exists(directory) == "dir" && toolbox.filesystem.exists(path.join(directory, 'subgraph.yaml')) == "file") {
       toolbox.print.error("Subgraph already exists! Please use the update subtask to update an existing subgraph!")
       process.exit(1)
     }
@@ -80,7 +80,7 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
   .setAction(async (taskArgs: any, hre) => {
     const directory = hre.config.paths.subgraph
     const network = hre.network.name || hre.config.defaultNetwork
-    const subgraph = await toolbox.filesystem.read(path.join(directory, 'subgraph.yaml'), 'utf8')
+    const subgraph = toolbox.filesystem.read(path.join(directory, 'subgraph.yaml'), 'utf8')
 
     if (!toolbox.filesystem.exists(directory) || !subgraph) {
       toolbox.print.error("No subgraph found! Please first initialize a new subgraph!")
@@ -99,7 +99,7 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
         let manifest = YAML.parse(subgraph)
         let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contractName)
         let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == taskArgs.contractName)
-        let currentAbiJson = await toolbox.filesystem.read(path.join(directory, subgraphAbi.file))
+        let currentAbiJson = toolbox.filesystem.read(path.join(directory, subgraphAbi.file))
 
         if (!currentAbiJson) {
           toolbox.print.error(`Could not read ${path.join(directory, subgraphAbi.file)}`)
@@ -116,10 +116,9 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
 
         step(spinner, `Checking events for changes`)
         let eventsChanged = await compareAbiEvents(spinner, toolbox, dataSource, contract.abi, currentAbiJson)
-        if(eventsChanged) {
+        if (eventsChanged) {
           process.exit(1)
-        }
-         else {
+        } else {
           let codegen = await runCodegen(directory)
           if (codegen !== true) {
             process.exit(1)
@@ -130,6 +129,33 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
             process.exit(1)
           }
         }
+        return true
+      }
+    )
+  })
+
+task("add", "Add a datasource to the project")
+  .addParam("address", "The address of the contract")
+  .addOptionalParam("subgraphYaml", "The location of the subgraph.yaml file", "subgraph.yaml")
+  .addOptionalParam("contractName", "The name of the contract", "Contract")
+  .addFlag("mergeEntities", "Whether the entities should be merged")
+  .addOptionalParam("abi", "Path to local abi file")
+  .setAction(async (taskArgs: any, hre) => {
+    const directory = hre.config.paths.subgraph
+    const subgraph = toolbox.filesystem.read(path.join(directory, taskArgs.subgraphYaml), 'utf8')
+
+    if (!toolbox.filesystem.exists(directory) || !subgraph) {
+      toolbox.print.error("No subgraph found! Please first initialize a new subgraph!")
+      process.exit(1)
+    }
+
+    await withSpinner(
+      `Add a new datasource`,
+      `Failed to add a new datasource`,
+      `Warnings while adding a new datasource`,
+      async (spinner: any) => {
+        step(spinner, `Initiating graph add command`)
+        await runGraphAdd(taskArgs, directory)
         return true
       }
     )

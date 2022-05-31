@@ -73,6 +73,24 @@ or
 ```sh
 npx hardhat graph <init|update> --contract-name MyContract --address 0x123... # the subtask parameter is optional
 ```
+## `add` subtask:
+  - Expects one mandatory parameter: `address: '0x123..`
+  - Has four optional paramaters:
+    - `subgraphYaml: /path/to/subgraph.yaml` (default is './subgraph.yaml')
+    - `abi: /path/to/Contract.json` Loads abi from file
+    - `mergeEntities` When this flag is given new entities with already taken names are skipped
+    - `contractName: MyContract` (default is 'Contract')
+  - Workflow:
+    - Checks whether the subgraph exists and creates a command line of the arguments passed
+    - Runs `graph add` from the graph-cli with the given params which updates the `subgraph.yaml`, `schema.graphql` and adds a new abi and mapping file
+    - Runs `codegen`
+
+  - Example usage:
+
+```sh
+npx hardhat add --address 0x123... --merge-entities
+```
+  
 
 ## How to try it out:
 NOTE:
