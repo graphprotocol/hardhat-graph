@@ -69,12 +69,14 @@ export const updateNetworksFile = async (toolbox: any, network: string, dataSour
 }
 
 export const runCodegen = async (directory: string): Promise<boolean> => {
-  await graphCli.run(['codegen', path.join(directory, 'subgraph.yaml'), '-o',  path.join(directory, 'generated')])
+  process.chdir(directory)
+  await graphCli.run(['codegen'])
   return true
 }
 
 export const runBuild = async (network: string, directory: string): Promise<boolean> => {
-  await graphCli.run(['build', path.join(directory, 'subgraph.yaml'), '-o', path.join(directory, 'build'), '--network', network, '--networkFile', path.join(directory, 'networks.json')])
+  process.chdir(directory)
+  await graphCli.run(['build', '--network', network])
   return true
 }
 
@@ -82,7 +84,7 @@ export const runGraphAdd = async (taskArgs: { contractName: string, address: str
   mergeEntities: boolean, abi: string, help: boolean }, directory: string) => {
   process.chdir(directory)
   
-  let commandLine = ['add', taskArgs.address, 'subgraph.yaml']
+  let commandLine = ['add', taskArgs.address]
   if (taskArgs.mergeEntities) {
     commandLine.push('--merge-entities')
   }
