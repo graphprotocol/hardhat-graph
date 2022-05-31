@@ -49,7 +49,7 @@ deploy()
   });
 ```
 
-## `graph` subtask:
+## `graph` task:
   - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..` and an optional positional parameter `subtask` <init|update>.
   - Workflow:
     - Conditionally runs either `init` or `update` subtask depending if a subgraph already exists or not. If the optional param `subtask` is passed it will run that subtask instead.
@@ -73,7 +73,7 @@ or
 ```sh
 npx hardhat graph <init|update> --contract-name MyContract --address 0x123... # the subtask parameter is optional
 ```
-## `add` subtask:
+## `add` task:
   - Expects one mandatory parameter: `address: '0x123..`
   - Has four optional paramaters:
     - `subgraphYaml: /path/to/subgraph.yaml` (default is './subgraph.yaml')
