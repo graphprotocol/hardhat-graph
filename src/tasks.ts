@@ -136,12 +136,13 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
 
 task("add", "Add a datasource to the project")
   .addParam("address", "The address of the contract")
+  .addOptionalParam("subgraphYaml", "The location of the subgraph.yaml file", "subgraph.yaml")
   .addOptionalParam("contractName", "The name of the contract", "Contract")
-  .addOptionalParam("mergeEntities", "Whether the entities should be merged")
+  .addFlag("mergeEntities", "Whether the entities should be merged")
   .addOptionalParam("abi", "Path to local abi file")
   .setAction(async (taskArgs: any, hre) => {
     const directory = hre.config.paths.subgraph
-    const subgraph = toolbox.filesystem.read(path.join(directory, 'subgraph.yaml'), 'utf8')
+    const subgraph = toolbox.filesystem.read(path.join(directory, taskArgs.subgraphYaml), 'utf8')
 
     if (!toolbox.filesystem.exists(directory) || !subgraph) {
       toolbox.print.error("No subgraph found! Please first initialize a new subgraph!")
