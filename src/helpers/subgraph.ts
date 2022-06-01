@@ -95,27 +95,35 @@ export const runGraphAdd = async (taskArgs: { contractName: string, address: str
   if (fs.existsSync(directory)) {
     process.chdir(directory)
   }
-  
+
+  let { 
+    abi,
+    address,
+    contractName,
+    mergeEntities,
+    subgraphYaml
+  } = taskArgs
+
   if(isFullyQualifiedName(contractName)) { 
     ;({ contractName } = parseFullyQualifiedName(contractName))
   }
-  
-  let commandLine = ['add', taskArgs.address, '--contract-name', taskArgs.contractName]
-  if (taskArgs.subgraphYaml.includes(directory)) {
-    commandLine.push(path.normalize(taskArgs.subgraphYaml.replace(directory, '')))
+
+  let commandLine = ['add', address, '--contract-name', contractName]
+  if (subgraphYaml.includes(directory)) {
+    commandLine.push(path.normalize(subgraphYaml.replace(directory, '')))
   } else {
-    commandLine.push(taskArgs.subgraphYaml)
+    commandLine.push(subgraphYaml)
   }
 
-  if (taskArgs.mergeEntities) {
+  if (mergeEntities) {
     commandLine.push('--merge-entities')
   }
 
-  if (taskArgs.abi) {
-    if (taskArgs.abi.includes(directory)) {
-      commandLine.push('--abi', path.normalize(taskArgs.abi.replace(directory, '')))
+  if (abi) {
+    if (abi.includes(directory)) {
+      commandLine.push('--abi', path.normalize(abi.replace(directory, '')))
     } else {
-      commandLine.push('--abi', taskArgs.abi)
+      commandLine.push('--abi', abi)
     }  
   }
 

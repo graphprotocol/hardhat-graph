@@ -26,7 +26,12 @@ task("graph", "Wrapper task that will conditionally execute init, update or add.
     if (subgraph) {
       let protocol = new Protocol('ethereum')
       let manifest = await Subgraph.load(manifestPath, { protocol })
-      let dataSourcePresent = manifest.result.get('dataSources').map((ds: any) => ds.get('name')).contains(taskArgs.contractName)
+      let contractName = taskArgs.contractName
+      if(isFullyQualifiedName(contractName)) { 
+       ;({ contractName } = parseFullyQualifiedName(contractName))
+      }
+      
+      let dataSourcePresent = manifest.result.get('dataSources').map((ds: any) => ds.get('name')).contains(contractName)
 
       command = dataSourcePresent ? "update" : "add"
     }
@@ -95,7 +100,7 @@ subtask("init", "Initialize a subgraph")
 subtask("update", "Updates an existing subgraph from artifact or contract address")
   .addParam("contractName", "The name of the contract")
   .addParam("address", "The address of the contract")
-  .setAction(async (taskArgs: any, hre) => {
+  .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
     const network = hre.network.name || hre.config.defaultNetwork
     const subgraph = toolbox.filesystem.read(path.join(directory, 'subgraph.yaml'), 'utf8')
@@ -111,15 +116,18 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
       `Warnings while updating subgraph`,
       async (spinner: any) => {
         step(spinner, `Fetching new contract version`)
-        let contract = await hre.artifacts.readArtifact(taskArgs.contractName)
+        let artifact = await hre.artifacts.readArtifact(taskArgs.contractName)
 
         step(spinner, `Fetching current contract version from subgraph`)
         let manifest = YAML.parse(subgraph)
+        let { contractName } = taskArgs 
+
         if(isFullyQualifiedName(contractName)) { 
           ;({ contractName } = parseFullyQualifiedName(contractName))
         }
-        let dataSource = manifest.dataSources.find((source: { source: { abi: { name: string } } }) => source.source.abi == taskArgs.contractName)
-        let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == taskArgs.contractName)
+
+        let dataSource = manifest.dataSources.find((source: { source: { abi: string } }) => source.source.abi == artifact.contractName)
+        let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == artifact.contractName)
         let currentAbiJson = toolbox.filesystem.read(path.join(directory, subgraphAbi.file))
 
         if (!currentAbiJson) {
@@ -129,14 +137,14 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
 
         step(spinner, `Updating contract ABI in subgraph`)
         await toolbox.patching.update(path.join(directory, subgraphAbi.file), (abi: any) => {
-          return contract.abi
+          return artifact.abi
         })
 
         step(spinner, `Updating contract's ${network} address in networks.json`)
         await updateNetworksFile(toolbox, network, dataSource.name, taskArgs.address, directory)
 
         step(spinner, `Checking events for changes`)
-        let eventsChanged = await compareAbiEvents(spinner, toolbox, dataSource, contract.abi)
+        let eventsChanged = await compareAbiEvents(spinner, toolbox, dataSource, artifact.abi)
         if (eventsChanged) {
           process.exit(1)
         } else {
@@ -161,7 +169,7 @@ task("add", "Add a datasource to the project")
   .addOptionalParam("contractName", "The name of the contract", "Contract")
   .addFlag("mergeEntities", "Whether the entities should be merged")
   .addOptionalParam("abi", "Path to local abi file")
-  .setAction(async (taskArgs: any, hre) => {
+  .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
     const subgraph = toolbox.filesystem.read(path.join(directory, taskArgs.subgraphYaml), 'utf8')
 
