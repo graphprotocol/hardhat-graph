@@ -96,6 +96,10 @@ export const runGraphAdd = async (taskArgs: { contractName: string, address: str
     process.chdir(directory)
   }
   
+  if(isFullyQualifiedName(contractName)) { 
+    ;({ contractName } = parseFullyQualifiedName(contractName))
+  }
+  
   let commandLine = ['add', taskArgs.address, '--contract-name', taskArgs.contractName]
   if (taskArgs.subgraphYaml.includes(directory)) {
     commandLine.push(path.normalize(taskArgs.subgraphYaml.replace(directory, '')))
