@@ -1,13 +1,14 @@
+import fs from 'fs'
 import path from 'path'
+import process from 'process'
 import immutable from 'immutable'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
+import { isFullyQualifiedName, parseFullyQualifiedName } from 'hardhat/utils/contract-names'
 
-const process = require('process');
-const fs = require('fs')
 const graphCli = require('@graphprotocol/graph-cli/src/cli')
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
 const { chooseNodeUrl } = require('@graphprotocol/graph-cli/src/command-helpers/node')
-const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
+const { withSpinner } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/src/command-helpers/scaffold')
 
 export const initSubgraph = async (taskArgs: { contractName: string, address: string }, hre: HardhatRuntimeEnvironment): Promise<boolean> =>
@@ -36,6 +37,10 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
       let ABI = protocolInstance.getABI()
       let artifact = await hre.artifacts.readArtifact(contractName)
       let abi = new ABI(contractName, undefined, immutable.fromJS(artifact.abi))
+
+      if(isFullyQualifiedName(contractName)) { 
+        ;({ contractName } = parseFullyQualifiedName(contractName))
+      }
 
       let scaffold = await generateScaffold(
         {
