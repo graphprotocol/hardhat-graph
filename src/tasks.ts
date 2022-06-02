@@ -53,6 +53,7 @@ subtask("init", "Initialize a subgraph")
   .addParam("address", "The address of the contract")
   .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
+    const subgraphName = hre.config.subgraph!.name
 
     if (toolbox.filesystem.exists(directory) == "dir" && toolbox.filesystem.exists(path.join(directory, 'subgraph.yaml')) == "file") {
       toolbox.print.error("Subgraph already exists! Please use the update subtask to update an existing subgraph!")
@@ -83,6 +84,18 @@ subtask("init", "Initialize a subgraph")
         testsFolder: `${directory}/tests`,
         manifestPath: `${directory}/subgraph.yaml`
       })
+    })
+
+    // Add scripts to package.json
+    await toolbox.patching.update('package.json', (content: any) => {
+      if(!content.scripts) content.scripts = {}
+      content.scripts['test'] = 'graph test'
+      content.scripts['graph-local'] = "docker-compose up"
+      content.scripts['graph-local-rm'] = "docker-compose down -v && docker-compose rm -v && rm -rf data"
+      content.scripts['create-local'] = `graph create --node http://127.0.0.1:8020 ${subgraphName}`
+      content.scripts['deploy-local'] = `graph deploy --ipfs http://127.0.0.1:5001 --node http://127.0.0.1:8020 ${subgraphName} ${directory}/subgraph.yaml`
+      content.scripts['hardhat-local'] = "hardhat node --hostname 0.0.0.0"
+      return content
     })
 
     // Maybe Not needed?
