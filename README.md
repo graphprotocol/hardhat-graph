@@ -130,9 +130,25 @@ JS: `require('hardhat-graph')`
 TS: `import 'hardhat-graph'`
 
 ## Configurable options in hardhat.config file:
-
-```typescript
+JS:
+```javascript
 module.exports = {
+  ...
+  subgraph: {
+    name: 'MySubgraph', // Defaults to the name of the root folder of the hardhat project
+    product: 'hosted-service'|'subgraph-studio', // Defaults to 'subgraph-studio'
+    indexEvents: true|false, // Defaults to false
+    allowSimpleName: true|false // Defaults to `false` if product is `hosted-service` and `true` if product is `subgraph-studio`
+  },
+  paths: {
+    subgraph: './path/to/subgraph' // Defaults to './subgraph'
+  }
+}
+```
+
+TS:
+```typescript
+export default {
   ...
   subgraph: {
     name: 'MySubgraph', // Defaults to the name of the root folder of the hardhat project
