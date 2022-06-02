@@ -169,4 +169,4 @@ export default {
 - [ ]  Include the `add` subtask/command/function to the `graph` task.
 - [ ]  Add an option to auto-resolve events changes.
 - [ ] Is it okay to create an initial commit when initialising a repo? We would not want to commit hardhat files that otherwise should not be committed
-- [ ] Properly set peerDeps versions
+- [x] Properly set peerDeps versions
