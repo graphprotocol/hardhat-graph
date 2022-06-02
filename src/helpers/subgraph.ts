@@ -3,7 +3,7 @@ import path from 'path'
 import process from 'process'
 import immutable from 'immutable'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { isFullyQualifiedName, parseFullyQualifiedName } from 'hardhat/utils/contract-names'
+import { parseName } from 'hardhat/utils/contract-names'
 
 const graphCli = require('@graphprotocol/graph-cli/src/cli')
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
@@ -36,11 +36,7 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
       let protocolInstance = new Protocol('ethereum')
       let ABI = protocolInstance.getABI()
       let artifact = await hre.artifacts.readArtifact(contractName)
-      let abi = new ABI(contractName, undefined, immutable.fromJS(artifact.abi))
-
-      if(isFullyQualifiedName(contractName)) { 
-        ;({ contractName } = parseFullyQualifiedName(contractName))
-      }
+      let abi = new ABI(artifact.contractName, undefined, immutable.fromJS(artifact.abi))
 
       let scaffold = await generateScaffold(
         {
@@ -49,7 +45,7 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
           subgraphName: name,
           abi,
           contract: address,
-          contractName,
+          contractName: artifact.contractName,
           dataSourceName: contractName,
           indexEvents,
           node,
@@ -104,11 +100,9 @@ export const runGraphAdd = async (taskArgs: { contractName: string, address: str
     subgraphYaml
   } = taskArgs
 
-  if(isFullyQualifiedName(contractName)) { 
-    ;({ contractName } = parseFullyQualifiedName(contractName))
-  }
-
+  ;({ contractName } = parseName(contractName))
   let commandLine = ['add', address, '--contract-name', contractName]
+  
   if (subgraphYaml.includes(directory)) {
     commandLine.push(path.normalize(subgraphYaml.replace(directory, '')))
   } else {

@@ -4,7 +4,7 @@ import * as toolbox from 'gluegun'
 import { subtask, task } from 'hardhat/config'
 import { compareAbiEvents } from './helpers/events'
 import { checkForRepo, initRepository, initGitignore } from './helpers/git'
-import { isFullyQualifiedName, parseFullyQualifiedName } from 'hardhat/utils/contract-names'
+import { parseName } from 'hardhat/utils/contract-names'
 import { initSubgraph, runCodegen, runBuild, updateNetworksFile, runGraphAdd } from './helpers/subgraph'
 
 
@@ -23,13 +23,13 @@ task("graph", "Wrapper task that will conditionally execute init, update or add.
     let manifestPath = path.join(directory, 'subgraph.yaml')
     let subgraph = toolbox.filesystem.exists(directory) == "dir" && toolbox.filesystem.exists(manifestPath) == "file"
     let command = 'init'
+    
     if (subgraph) {
       let protocol = new Protocol('ethereum')
       let manifest = await Subgraph.load(manifestPath, { protocol })
-      let contractName = taskArgs.contractName
-      if(isFullyQualifiedName(contractName)) { 
-       ;({ contractName } = parseFullyQualifiedName(contractName))
-      }
+      let { contractName } = taskArgs
+      
+      ;({ contractName } = parseName(contractName))
       
       let dataSourcePresent = manifest.result.get('dataSources').map((ds: any) => ds.get('name')).contains(contractName)
 
@@ -120,11 +120,6 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
 
         step(spinner, `Fetching current contract version from subgraph`)
         let manifest = YAML.parse(subgraph)
-        let { contractName } = taskArgs 
-
-        if(isFullyQualifiedName(contractName)) { 
-          ;({ contractName } = parseFullyQualifiedName(contractName))
-        }
 
         let dataSource = manifest.dataSources.find((source: { source: { abi: string } }) => source.source.abi == artifact.contractName)
         let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == artifact.contractName)
