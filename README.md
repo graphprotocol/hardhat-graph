@@ -166,7 +166,7 @@ export default {
 
 - [ ] Instead of subtask `init` and `update` could be functions, this potentially could make them easier to integrated in variety of custom workflows
 - [ ] `graph` task could be renamed
-- [ ]  Include the `add` subtask/command/function to the `graph` task.
+- [x]  Include the `add` subtask/command/function to the `graph` task.
 - [ ]  Add an option to auto-resolve events changes.
 - [ ] Is it okay to create an initial commit when initialising a repo? We would not want to commit hardhat files that otherwise should not be committed
 - [x] Properly set peerDeps versions
