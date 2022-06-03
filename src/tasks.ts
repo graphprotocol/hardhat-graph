@@ -163,11 +163,10 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
             process.exit(1)
           }
 
-          // Temporarily comment out graph build
-          // let build = await runBuild(network, directory)
-          // if (build !== true) {
-          //   process.exit(1)
-          // }
+          let build = await runBuild(network, directory)
+          if (build !== true) {
+            process.exit(1)
+          }
         }
         return true
       }
@@ -183,6 +182,8 @@ task("add", "Add a datasource to the project")
   .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
     const subgraph = toolbox.filesystem.read(path.join(directory, taskArgs.subgraphYaml), 'utf8')
+    const network = hre.network.name || hre.config.defaultNetwork
+    const { contractName } = parseName(taskArgs.contractName)
 
     if (!toolbox.filesystem.exists(directory) || !subgraph) {
       toolbox.print.error("No subgraph found! Please first initialize a new subgraph!")
@@ -196,6 +197,11 @@ task("add", "Add a datasource to the project")
       async (spinner: any) => {
         step(spinner, `Initiating graph add command`)
         await runGraphAdd(taskArgs, directory)
+        
+        // Temporarily until graph add itself updates the networks file
+        process.chdir(hre.config.paths.root)
+        await updateNetworksFile(toolbox, network, contractName, taskArgs.address, directory)
+        
         return true
       }
     )

@@ -62,9 +62,9 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
 export const updateNetworksFile = async (toolbox: any, network: string, dataSource: string, address: string, directory: string): Promise<void> => {
   await toolbox.patching.update(path.join(directory, 'networks.json'), (config: any) => {
     if(Object.keys(config).includes(network)) {
-      config[network][dataSource].address = address
+      Object.assign(config[network], { [dataSource]: { "address": address } })
     } else {
-      config[network] = { [dataSource]: { address: address } }
+      Object.assign(config, { [network]: { [dataSource]: { "address": address } }})
     }
     return config
   })

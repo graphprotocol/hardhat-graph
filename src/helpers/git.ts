@@ -44,12 +44,12 @@ export const initGitignore = async (toolbox: any, directory: string): Promise<bo
 
       step(spinner, "Add subgraph files and folders to .gitignore file")
 
-      let subgraphFilesIgnored = await toolbox.patching.exists('config.txt', '# Subgraph')
+      let subgraphFilesIgnored = await toolbox.patching.exists('.gitignore', '# Subgraph')
       if (!subgraphFilesIgnored) {
         await toolbox.patching.append('.gitignore', `# Subgraph\n${directory}/generated/\n${directory}/build/\n`)
       }
 
-      let matchstickFilesIgnored = await toolbox.patching.exists('config.txt', '# Matchstick')
+      let matchstickFilesIgnored = await toolbox.patching.exists('.gitignore', '# Matchstick')
       if (!matchstickFilesIgnored) {
         await toolbox.patching.append('.gitignore', `# Matchstick\n${directory}/tests/.*/\n`)
       }
