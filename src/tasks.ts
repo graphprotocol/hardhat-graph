@@ -89,17 +89,19 @@ subtask("init", "Initialize a subgraph")
     // Add scripts to package.json
     await toolbox.patching.update('package.json', (content: any) => {
       if(!content.scripts) content.scripts = {}
+      
       content.scripts['test'] = 'graph test'
       content.scripts['graph-local'] = "docker-compose up"
       content.scripts['graph-local-rm'] = "docker-compose down -v && docker-compose rm -v && rm -rf data"
       content.scripts['create-local'] = `graph create --node http://127.0.0.1:8020 ${subgraphName}`
       content.scripts['deploy-local'] = `graph deploy --ipfs http://127.0.0.1:5001 --node http://127.0.0.1:8020 ${subgraphName} ${directory}/subgraph.yaml`
       content.scripts['hardhat-local'] = "hardhat node --hostname 0.0.0.0"
+      
       return content
     })
 
     // Maybe Not needed?
-    let gitignore = await initGitignore(toolbox)
+    let gitignore = await initGitignore(toolbox, directory)
     if (gitignore !== true) {
       process.exit(1)
     }

@@ -27,7 +27,7 @@ export const initRepository = async (toolbox: any): Promise<boolean> =>
     }
   )
 
-export const initGitignore = async (toolbox: any): Promise<boolean> =>
+export const initGitignore = async (toolbox: any, directory: string): Promise<boolean> =>
   await withSpinner(
     `Add subgraph files to .gitignore`,
     `Failed to add subgraph files to .gitignore`,
@@ -41,8 +41,18 @@ export const initGitignore = async (toolbox: any): Promise<boolean> =>
         await toolbox.system.run('touch .gitignore')
       }
 
+
       step(spinner, "Add subgraph files and folders to .gitignore file")
-      await toolbox.patching.append('.gitignore', '# Matchstick\nsubgraph/tests/.*/\n\n# Subgraph\nsubgraph/generated/\nsubgraph/build/\n')
+
+      let subgraphFilesIgnored = await toolbox.patching.exists('config.txt', '# Subgraph')
+      if (!subgraphFilesIgnored) {
+        await toolbox.patching.append('.gitignore', `# Subgraph\n${directory}/generated/\n${directory}/build/\n`)
+      }
+
+      let matchstickFilesIgnored = await toolbox.patching.exists('config.txt', '# Matchstick')
+      if (!matchstickFilesIgnored) {
+        await toolbox.patching.append('.gitignore', `# Matchstick\n${directory}/tests/.*/\n`)
+      }
 
       return true
     }
