@@ -163,10 +163,11 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
             process.exit(1)
           }
 
-          let build = await runBuild(network, directory)
-          if (build !== true) {
-            process.exit(1)
-          }
+          // Temporarily comment out graph build
+          // let build = await runBuild(network, directory)
+          // if (build !== true) {
+          //   process.exit(1)
+          // }
         }
         return true
       }
