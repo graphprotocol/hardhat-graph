@@ -130,9 +130,25 @@ JS: `require('hardhat-graph')`
 TS: `import 'hardhat-graph'`
 
 ## Configurable options in hardhat.config file:
-
-```typescript
+JS:
+```javascript
 module.exports = {
+  ...
+  subgraph: {
+    name: 'MySubgraph', // Defaults to the name of the root folder of the hardhat project
+    product: 'hosted-service'|'subgraph-studio', // Defaults to 'subgraph-studio'
+    indexEvents: true|false, // Defaults to false
+    allowSimpleName: true|false // Defaults to `false` if product is `hosted-service` and `true` if product is `subgraph-studio`
+  },
+  paths: {
+    subgraph: './path/to/subgraph' // Defaults to './subgraph'
+  }
+}
+```
+
+TS:
+```typescript
+export default {
   ...
   subgraph: {
     name: 'MySubgraph', // Defaults to the name of the root folder of the hardhat project
@@ -150,7 +166,7 @@ module.exports = {
 
 - [ ] Instead of subtask `init` and `update` could be functions, this potentially could make them easier to integrated in variety of custom workflows
 - [ ] `graph` task could be renamed
-- [ ]  Include the `add` subtask/command/function to the `graph` task.
+- [x]  Include the `add` subtask/command/function to the `graph` task.
 - [ ]  Add an option to auto-resolve events changes.
 - [ ] Is it okay to create an initial commit when initialising a repo? We would not want to commit hardhat files that otherwise should not be committed
-- [ ] Properly set peerDeps versions
+- [x] Properly set peerDeps versions

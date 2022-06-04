@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 
-export const compareAbiEvents = async(spinner: any, toolbox: any, dataSource: any, newAbiJson: any, currentAbiJson: any): Promise<boolean> => {
+export const compareAbiEvents = async(spinner: any, toolbox: any, dataSource: any, newAbiJson: any): Promise<boolean> => {
   // Convert to Interface
   let newAbi = new ethers.utils.Interface(newAbiJson)
   // Get events signatures

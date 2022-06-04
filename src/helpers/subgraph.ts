@@ -1,13 +1,14 @@
+import fs from 'fs'
 import path from 'path'
+import process from 'process'
 import immutable from 'immutable'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
+import { parseName } from 'hardhat/utils/contract-names'
 
-const process = require('process');
-const fs = require('fs')
 const graphCli = require('@graphprotocol/graph-cli/src/cli')
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
 const { chooseNodeUrl } = require('@graphprotocol/graph-cli/src/command-helpers/node')
-const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
+const { withSpinner } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/src/command-helpers/scaffold')
 
 export const initSubgraph = async (taskArgs: { contractName: string, address: string }, hre: HardhatRuntimeEnvironment): Promise<boolean> =>
@@ -35,7 +36,7 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
       let protocolInstance = new Protocol('ethereum')
       let ABI = protocolInstance.getABI()
       let artifact = await hre.artifacts.readArtifact(contractName)
-      let abi = new ABI(contractName, undefined, immutable.fromJS(artifact.abi))
+      let abi = new ABI(artifact.contractName, undefined, immutable.fromJS(artifact.abi))
 
       let scaffold = await generateScaffold(
         {
@@ -44,7 +45,7 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
           subgraphName: name,
           abi,
           contract: address,
-          contractName,
+          contractName: artifact.contractName,
           dataSourceName: contractName,
           indexEvents,
           node,
@@ -61,9 +62,9 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
 export const updateNetworksFile = async (toolbox: any, network: string, dataSource: string, address: string, directory: string): Promise<void> => {
   await toolbox.patching.update(path.join(directory, 'networks.json'), (config: any) => {
     if(Object.keys(config).includes(network)) {
-      config[network][dataSource].address = address
+      Object.assign(config[network], { [dataSource]: { "address": address } })
     } else {
-      config[network] = { [dataSource]: { address: address } }
+      Object.assign(config, { [network]: { [dataSource]: { "address": address } }})
     }
     return config
   })
@@ -90,23 +91,33 @@ export const runGraphAdd = async (taskArgs: { contractName: string, address: str
   if (fs.existsSync(directory)) {
     process.chdir(directory)
   }
+
+  let { 
+    abi,
+    address,
+    contractName,
+    mergeEntities,
+    subgraphYaml
+  } = taskArgs
+
+  ;({ contractName } = parseName(contractName))
+  let commandLine = ['add', address, '--contract-name', contractName]
   
-  let commandLine = ['add', taskArgs.address, '--contract-name', taskArgs.contractName]
-  if (taskArgs.subgraphYaml.includes(directory)) {
-    commandLine.push(path.normalize(taskArgs.subgraphYaml.replace(directory, '')))
+  if (subgraphYaml.includes(directory)) {
+    commandLine.push(path.normalize(subgraphYaml.replace(directory, '')))
   } else {
-    commandLine.push(taskArgs.subgraphYaml)
+    commandLine.push(subgraphYaml)
   }
 
-  if (taskArgs.mergeEntities) {
+  if (mergeEntities) {
     commandLine.push('--merge-entities')
   }
 
-  if (taskArgs.abi) {
-    if (taskArgs.abi.includes(directory)) {
-      commandLine.push('--abi', path.normalize(taskArgs.abi.replace(directory, '')))
+  if (abi) {
+    if (abi.includes(directory)) {
+      commandLine.push('--abi', path.normalize(abi.replace(directory, '')))
     } else {
-      commandLine.push('--abi', taskArgs.abi)
+      commandLine.push('--abi', abi)
     }  
   }
 
