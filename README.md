@@ -31,7 +31,8 @@ deploy()
     - Updates the contract ABI in `./subgraph/abis`
     - Updates the contract Address in `network.json` if it's deployed to the same network. If the contract has been deployed to a network that is not present in the config file, adds an entry for the new network.
     - Checks for changes to the contract events. If there are any changes the task will exit and the user will be informed and prompted to address the changes in the subgraph.yaml file and manually run `codegen` and `build`.
-    - Runs `codegen` and `build` commands if there are no changes to the contract events.
+    - Runs `codegen` and if there are no changes to the contract events.
+    - For now you'll have to manually run `graph build --network <network>` from the subgraph folder
   - Example usage:
 ```typescript
 async function deploy(contractName: string) {
