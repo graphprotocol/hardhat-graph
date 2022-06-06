@@ -1,13 +1,22 @@
 {
   "root": true,
   "parser": "@typescript-eslint/parser",
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"],
+        "moduleDirectory": ["node_modules", "src/"],
+      }
+    }
+  },
   "plugins": [
       "@typescript-eslint"
   ],
   "extends": [
       "eslint:recommended",
       "plugin:@typescript-eslint/eslint-recommended",
-      "plugin:@typescript-eslint/recommended"
+      "plugin:@typescript-eslint/recommended",
+      "plugin:import/recommended"
   ],
   "rules": {
       "@typescript-eslint/no-explicit-any": "off",

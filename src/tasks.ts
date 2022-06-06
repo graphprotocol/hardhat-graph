@@ -3,9 +3,9 @@ import * as YAML from 'yaml'
 import * as toolbox from 'gluegun'
 import { subtask, task } from 'hardhat/config'
 import { compareAbiEvents } from './helpers/events'
-import { checkForRepo, initRepository, initGitignore } from './helpers/git'
 import { parseName } from 'hardhat/utils/contract-names'
-import { initSubgraph, runCodegen, runBuild, updateNetworksFile, runGraphAdd } from './helpers/subgraph'
+import { checkForRepo, initRepository, initGitignore } from './helpers/git'
+import { initSubgraph, runCodegen, updateNetworksFile, runGraphAdd } from './helpers/subgraph'
 
 
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
@@ -19,30 +19,30 @@ task("graph", "Wrapper task that will conditionally execute init, update or add.
   .addParam("address", "The address of the contract")
   .addFlag("mergeEntities", "Whether the entities should be merged")
   .setAction(async (taskArgs, hre) => {
-    let directory = hre.config.paths.subgraph
-    let manifestPath = path.join(directory, 'subgraph.yaml')
-    let subgraph = toolbox.filesystem.exists(directory) == "dir" && toolbox.filesystem.exists(manifestPath) == "file"
+    const directory = hre.config.paths.subgraph
+    const manifestPath = path.join(directory, 'subgraph.yaml')
+    const subgraph = toolbox.filesystem.exists(directory) == "dir" && toolbox.filesystem.exists(manifestPath) == "file"
     let command = 'init'
     
     if (subgraph) {
-      let protocol = new Protocol('ethereum')
-      let manifest = await Subgraph.load(manifestPath, { protocol })
+      const protocol = new Protocol('ethereum')
+      const manifest = await Subgraph.load(manifestPath, { protocol })
       let { contractName } = taskArgs
       
       ;({ contractName } = parseName(contractName))
       
-      let dataSourcePresent = manifest.result.get('dataSources').map((ds: any) => ds.get('name')).contains(contractName)
+      const dataSourcePresent = manifest.result.get('dataSources').map((ds: any) => ds.get('name')).contains(contractName)
 
       command = dataSourcePresent ? "update" : "add"
     }
 
-    let { subtask, ...args } = taskArgs
+    const { subtask, ...args } = taskArgs
     if(command == 'add') args.abi = await getArtifactPath(hre, taskArgs.contractName)
     await hre.run(subtask || command, args)
   });
 
   const getArtifactPath = async (hre: any, contractName: string): Promise<string> => {
-    let artifact = await hre.artifacts.readArtifact(contractName)
+    const artifact = await hre.artifacts.readArtifact(contractName)
     return path.join(hre.config.paths.artifacts, artifact.sourceName, `${artifact.contractName}.json`)
   }
 
@@ -60,19 +60,19 @@ subtask("init", "Initialize a subgraph")
       process.exit(1)
     }
 
-    let scaffold = await initSubgraph(taskArgs, hre)
+    const scaffold = await initSubgraph(taskArgs, hre)
     if (scaffold !== true) {
       process.exit(1)
     }
 
-    let networkConfig = await initNetworksConfig(toolbox, directory, 'address')
+    const networkConfig = await initNetworksConfig(toolbox, directory, 'address')
     if (networkConfig !== true) {
       process.exit(1)
     }
 
-    let isGitRepo = await checkForRepo(toolbox)
+    const isGitRepo = await checkForRepo(toolbox)
     if (!isGitRepo) {
-      let repo = await initRepository(toolbox)
+      const repo = await initRepository(toolbox)
       if (repo !== true) {
         process.exit(1)
       }
@@ -101,12 +101,12 @@ subtask("init", "Initialize a subgraph")
     })
 
     // Maybe Not needed?
-    let gitignore = await initGitignore(toolbox, directory)
+    const gitignore = await initGitignore(toolbox, directory)
     if (gitignore !== true) {
       process.exit(1)
     }
 
-    let codegen = await runCodegen(directory)
+    const codegen = await runCodegen(hre, directory)
     if (codegen !== true) {
       process.exit(1)
     }
@@ -126,19 +126,19 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
     }
 
     await withSpinner(
-      `Update subgraph`,
-      `Failed to update subgraph`,
-      `Warnings while updating subgraph`,
+      `Update subgraph dataSource ${taskArgs.contractName}`,
+      `Failed to update subgraph dataSource ${taskArgs.contractName}`,
+      `Warnings while updating subgraph dataSource ${taskArgs.contractName}`,
       async (spinner: any) => {
         step(spinner, `Fetching new contract version`)
-        let artifact = await hre.artifacts.readArtifact(taskArgs.contractName)
+        const artifact = await hre.artifacts.readArtifact(taskArgs.contractName)
 
         step(spinner, `Fetching current contract version from subgraph`)
-        let manifest = YAML.parse(subgraph)
+        const manifest = YAML.parse(subgraph)
 
-        let dataSource = manifest.dataSources.find((source: { source: { abi: string } }) => source.source.abi == artifact.contractName)
-        let subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == artifact.contractName)
-        let currentAbiJson = toolbox.filesystem.read(path.join(directory, subgraphAbi.file))
+        const dataSource = manifest.dataSources.find((source: { source: { abi: string } }) => source.source.abi == artifact.contractName)
+        const subgraphAbi = dataSource.mapping.abis.find((abi: { name: string }) => abi.name == artifact.contractName)
+        const currentAbiJson = toolbox.filesystem.read(path.join(directory, subgraphAbi.file))
 
         if (!currentAbiJson) {
           toolbox.print.error(`Could not read ${path.join(directory, subgraphAbi.file)}`)
@@ -146,25 +146,21 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
         }
 
         step(spinner, `Updating contract ABI in subgraph`)
-        await toolbox.patching.update(path.join(directory, subgraphAbi.file), (abi: any) => {
-          return artifact.abi
-        })
+        toolbox.filesystem.write(path.join(directory, subgraphAbi.file), artifact.abi)
 
         step(spinner, `Updating contract's ${network} address in networks.json`)
         await updateNetworksFile(toolbox, network, dataSource.name, taskArgs.address, directory)
 
         step(spinner, `Checking events for changes`)
-        let eventsChanged = await compareAbiEvents(spinner, toolbox, dataSource, artifact.abi)
-        if (eventsChanged) {
-          process.exit(1)
-        } else {
-          let codegen = await runCodegen(directory)
+        const eventsChanged = await compareAbiEvents(spinner, toolbox, dataSource, artifact.abi)
+        if (!eventsChanged)  {
+          const codegen = await runCodegen(hre, directory)
           if (codegen !== true) {
             process.exit(1)
           }
 
           // Comment out temporarily
-          // let build = await runBuild(network, directory)
+          // let build = await runBuild(hre, network, directory)
           // if (build !== true) {
           //   process.exit(1)
           // }
@@ -197,10 +193,10 @@ task("add", "Add a datasource to the project")
       `Warnings while adding a new datasource`,
       async (spinner: any) => {
         step(spinner, `Initiating graph add command`)
-        await runGraphAdd(taskArgs, directory)
+        await runGraphAdd(hre, taskArgs, directory)
         
         // Temporarily until graph add itself updates the networks file
-        process.chdir(hre.config.paths.root)
+        step(spinner, `Updating networks.json`)
         await updateNetworksFile(toolbox, network, contractName, taskArgs.address, directory)
         
         return true

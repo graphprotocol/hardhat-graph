@@ -2,7 +2,7 @@ const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-help
 
 export const checkForRepo = async (toolbox: any): Promise<boolean> => {
   try {
-    let result = await toolbox.system.run('git rev-parse --is-inside-work-tree')
+    const result = await toolbox.system.run('git rev-parse --is-inside-work-tree')
     return result === 'true'
   } catch(err: any) {
     if (err.stderr.includes('not a git repository')) {
@@ -18,7 +18,7 @@ export const initRepository = async (toolbox: any): Promise<boolean> =>
     `Create git repository`,
     `Failed to create git repository`,
     `Warnings while creating git repository`,
-    async (spinner: any) => {
+    async () => {
       await toolbox.system.run('git init')
       // Not sure if it's okay to commit, as there may be hardhat files that are not supposed to be commited?
       // await system.run('git add --all')
@@ -34,7 +34,7 @@ export const initGitignore = async (toolbox: any, directory: string): Promise<bo
     `Warnings while adding subgraph files to .gitignore`,
     async (spinner: any) => {
       step(spinner, "Check if .gitignore already exists")
-      let ignoreExists = await toolbox.filesystem.exists('.gitignore')
+      const ignoreExists = await toolbox.filesystem.exists('.gitignore')
 
       if (!ignoreExists) {
         step(spinner, "Create .gitignore file")
@@ -44,12 +44,12 @@ export const initGitignore = async (toolbox: any, directory: string): Promise<bo
 
       step(spinner, "Add subgraph files and folders to .gitignore file")
 
-      let subgraphFilesIgnored = await toolbox.patching.exists('.gitignore', '# Subgraph')
+      const subgraphFilesIgnored = await toolbox.patching.exists('.gitignore', '# Subgraph')
       if (!subgraphFilesIgnored) {
         await toolbox.patching.append('.gitignore', `# Subgraph\n${directory}/generated/\n${directory}/build/\n`)
       }
 
-      let matchstickFilesIgnored = await toolbox.patching.exists('.gitignore', '# Matchstick')
+      const matchstickFilesIgnored = await toolbox.patching.exists('.gitignore', '# Matchstick')
       if (!matchstickFilesIgnored) {
         await toolbox.patching.append('.gitignore', `# Matchstick\n${directory}/tests/.*/\n`)
       }
