@@ -1,9 +1,8 @@
-import fs from 'fs'
 import path from 'path'
-import process from 'process'
 import immutable from 'immutable'
-import { HardhatRuntimeEnvironment } from 'hardhat/types'
+import { fromDirectory } from './execution'
 import { parseName } from 'hardhat/utils/contract-names'
+import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
 const graphCli = require('@graphprotocol/graph-cli/src/cli')
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
@@ -11,34 +10,34 @@ const { chooseNodeUrl } = require('@graphprotocol/graph-cli/src/command-helpers/
 const { withSpinner } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/src/command-helpers/scaffold')
 
+const AVAILABLE_PRODUCTS = ['subgraph-studio', 'hosted-service']
+
 export const initSubgraph = async (taskArgs: { contractName: string, address: string }, hre: HardhatRuntimeEnvironment): Promise<boolean> =>
   await withSpinner(
     `Create subgraph scaffold`,
     `Failed to create subgraph scaffold`,
     `Warnings while creating subgraph scaffold`,
     async (spinner: any) => {
-      let node
-      let { contractName, address } = taskArgs
-      let subgraphPath = hre.config.paths.subgraph!
-      let network = hre.network.name || hre.config.defaultNetwork
-      let {
+      const { contractName, address } = taskArgs
+      const subgraphPath = hre.config.paths.subgraph!
+      const network = hre.network.name || hre.config.defaultNetwork
+      const {
         name,
         product,
-        indexEvents,
-        allowSimpleName,
+        indexEvents
       } = hre.config.subgraph!
 
-      ;({ node, allowSimpleName } = chooseNodeUrl({ product, allowSimpleName }))
+      const { node, allowSimpleName } = chooseNodeUrl({ product, allowSimplename: hre.config.subgraph!.allowSimpleName })
 
       validateSubgraphName(name!, allowSimpleName)
       validateProduct(product!)
 
-      let protocolInstance = new Protocol('ethereum')
-      let ABI = protocolInstance.getABI()
-      let artifact = await hre.artifacts.readArtifact(contractName)
-      let abi = new ABI(artifact.contractName, undefined, immutable.fromJS(artifact.abi))
+      const protocolInstance = new Protocol('ethereum')
+      const ABI = protocolInstance.getABI()
+      const artifact = await hre.artifacts.readArtifact(contractName)
+      const abi = new ABI(artifact.contractName, undefined, immutable.fromJS(artifact.abi))
 
-      let scaffold = await generateScaffold(
+      const scaffold = await generateScaffold(
         {
           protocolInstance,
           network,
@@ -70,59 +69,74 @@ export const updateNetworksFile = async (toolbox: any, network: string, dataSour
   })
 }
 
-export const runCodegen = async (directory: string): Promise<boolean> => {
-  if (fs.existsSync(directory)) {
-    process.chdir(directory)
-  }
-  await graphCli.run(['codegen'])
-  return true
-}
+export const runCodegen = async (hre: HardhatRuntimeEnvironment, directory: string): Promise<boolean> =>
+  await fromDirectory(
+    hre, 
+    directory, 
+    async () => {
+      await graphCli.run(['codegen'])
+      
+      return true
+    }
+  )
 
-export const runBuild = async (network: string, directory: string): Promise<boolean> => {
-  if (fs.existsSync(directory)) {
-    process.chdir(directory)
-  }
-  await graphCli.run(['build', '--network', network])
-  return true
-}
+export const runBuild = async (hre: HardhatRuntimeEnvironment, network: string, directory: string): Promise<boolean> =>
+  await fromDirectory(
+    hre, 
+    directory, 
+    async () => {
+      await graphCli.run(['build', '--network', network])
+      
+      return true
+    }
+  )
 
-export const runGraphAdd = async (taskArgs: { contractName: string, address: string,
-  mergeEntities: boolean, abi: string, subgraphYaml: string }, directory: string) => {
-  if (fs.existsSync(directory)) {
-    process.chdir(directory)
-  }
+export const runGraphAdd = async (
+  hre: HardhatRuntimeEnvironment,
+  taskArgs: { 
+    contractName: string, 
+    address: string,
+    mergeEntities: boolean, 
+    abi: string, 
+    subgraphYaml: string }, 
+  directory: string): Promise<boolean> =>
+    await fromDirectory(
+      hre, 
+      directory, 
+      async () => {
+        const { 
+          abi,
+          address,
+          mergeEntities,
+          subgraphYaml
+        } = taskArgs
+      
+        const { contractName } = parseName(taskArgs.contractName)
+        const commandLine = ['add', address, '--contract-name', contractName]
+        
+        if (subgraphYaml.includes(directory)) {
+          commandLine.push(path.normalize(subgraphYaml.replace(directory, '')))
+        } else {
+          commandLine.push(subgraphYaml)
+        }
+      
+        if (mergeEntities) {
+          commandLine.push('--merge-entities')
+        }
+      
+        if (abi) {
+          if (abi.includes(directory)) {
+            commandLine.push('--abi', path.normalize(abi.replace(directory, '')))
+          } else {
+            commandLine.push('--abi', abi)
+          }  
+        }
+      
+        await graphCli.run(commandLine)
 
-  let { 
-    abi,
-    address,
-    contractName,
-    mergeEntities,
-    subgraphYaml
-  } = taskArgs
-
-  ;({ contractName } = parseName(contractName))
-  let commandLine = ['add', address, '--contract-name', contractName]
-  
-  if (subgraphYaml.includes(directory)) {
-    commandLine.push(path.normalize(subgraphYaml.replace(directory, '')))
-  } else {
-    commandLine.push(subgraphYaml)
-  }
-
-  if (mergeEntities) {
-    commandLine.push('--merge-entities')
-  }
-
-  if (abi) {
-    if (abi.includes(directory)) {
-      commandLine.push('--abi', path.normalize(abi.replace(directory, '')))
-    } else {
-      commandLine.push('--abi', abi)
-    }  
-  }
-
-  await graphCli.run(commandLine)
-}
+        return true
+      },
+    )
 
 const validateSubgraphName = (name: string, allowSimpleName: boolean | undefined): void => {
   if (name.split('/').length !== 2 && !allowSimpleName) {
@@ -156,9 +170,7 @@ module.exports = {
 
 
 export const validateProduct = (product: string): void => {
-  let availableProducts = ['subgraph-studio', 'hosted-service']
-
-  if (!availableProducts.includes(product)) {
-    throw new Error(`Unsupported product ${product}. Currently available products are ${availableProducts.join(' and ')}`)
+  if (!AVAILABLE_PRODUCTS.includes(product)) {
+    throw new Error(`Unsupported product ${product}. Currently available products are ${AVAILABLE_PRODUCTS.join(' and ')}`)
   }
 }
