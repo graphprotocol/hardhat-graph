@@ -9,7 +9,7 @@ extendConfig((config) => {
     config.paths.subgraph = './subgraph'
   }
 
-  let defaultConfig = {
+  const defaultConfig = {
     name: path.basename(config.paths.root),
     product: 'subgraph-studio',
     allowSimpleName: false,
