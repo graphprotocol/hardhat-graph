@@ -235,4 +235,5 @@ services:
 7. Create and deploy the subgraph using the commands in the package.json `yarn create-local` and `yarn deploy-local`
 8. Interact with your contract
 9. Query the subgraph from `http://127.0.0.1:8000/subgraphs/name/<your-subgraph-name>/graphql`
-10. If for any reason you restart the hardhat node, it is recommended to stop the graph node, delete the `data` folder created by the graph node and start new nodes.
+
+NOTE: If for any reason you stop the hardhat node, it is recommended to stop the graph node, delete the `data` folder and the docker containers and start new nodes. The plugin will generate a command in your package.json file `graph-local-rm`: "docker-compose down -v && docker-compose rm -v && rm -rf data"`
