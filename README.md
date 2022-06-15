@@ -163,11 +163,76 @@ export default {
 }
 ```
 
-## Issues to resolve:
+# Running local `graph node` against local `hardhat node`
 
-- [ ] Instead of subtask `init` and `update` could be functions, this potentially could make them easier to integrated in variety of custom workflows
-- [ ] `graph` task could be renamed
-- [x]  Include the `add` subtask/command/function to the `graph` task.
-- [ ]  Add an option to auto-resolve events changes.
-- [ ] Is it okay to create an initial commit when initialising a repo? We would not want to commit hardhat files that otherwise should not be committed
-- [x] Properly set peerDeps versions
+1. Create a `docker-compose.yml` file:
+
+```
+version: '3'
+services:
+  graph-node:
+    image: graphprotocol/graph-node
+    ports:
+      - '8000:8000'
+      - '8001:8001'
+      - '8020:8020'
+      - '8030:8030'
+      - '8040:8040'
+    depends_on:
+      - ipfs
+      - postgres
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    environment:
+      postgres_host: postgres
+      postgres_user: graph-node
+      postgres_pass: let-me-in
+      postgres_db: graph-node
+      ipfs: 'ipfs:5001'
+      ethereum: 'localhost:http://host.docker.internal:8545'
+      GRAPH_LOG: info
+  ipfs:
+    image: ipfs/go-ipfs:v0.10.0
+    ports:
+      - '5001:5001'
+    volumes:
+      - ./data/ipfs:/data/ipfs
+  postgres:
+    image: postgres
+    ports:
+      - '5432:5432'
+    command:
+      [
+        "postgres",
+        "-cshared_preload_libraries=pg_stat_statements"
+      ]
+    environment:
+      POSTGRES_USER: graph-node
+      POSTGRES_PASSWORD: let-me-in
+      POSTGRES_DB: graph-node
+      PGDATA: "/data/postgres"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+```
+
+2. Add the following to the networks configuration in your `hardhat.config` file:
+```
+{
+  ...
+  networks: {
+      localhost: {
+        url: "http://0.0.0.0:8545",
+      },
+    },
+   ...
+ }
+```
+
+3. Run the hardhat node with `npx hardhat node --hostname 0.0.0.0`
+4. Deploy your contract[s] to the localhost network either with a deploy script/task or throgh the hardhat console `npx hardhat console --network localhost`
+5. Update the networks of your dataSources in the `subgraph.yaml` file to `localhost` and the addresses to the deployed contract addresses
+6. Run `docker-compose up` or `docker compose up`
+7. Create and deploy the subgraph using the commands in the package.json `yarn create-local` and `yarn deploy-local`
+8. Interact with your contract
+9. Query the subgraph from `http://127.0.0.1:8000/subgraphs/name/<your-subgraph-name>/graphql`
+10. If for any reason you restart the hardhat node, it is recommended to stop the graph node, delete the `data` folder created by the graph node and start new nodes.
