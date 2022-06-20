@@ -73,9 +73,9 @@ npx hardhat add --address 0x123... --abi path/to/Contract.json --contactName MyC
 ```
 
 ### `graph`
-  - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..` and an optional positional parameter `subtask` <init|update>.
+  - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..` and an optional positional parameter `subtask` <init|update|add>.
   - Workflow:
-    - Conditionally runs either `init` or `update` subtask depending if a subgraph already exists or not. If the optional param `subtask` is passed it will run that subtask instead.
+    - Conditionally runs either `init`, `update` or `add` tasks depending if a subgraph already exists or not. If the optional param `subtask` is passed it will run that subtask instead.
   - Example usage:
 ```typescript
 async function deploy(contractName: string) {
@@ -94,7 +94,7 @@ deploy()
 ```
 or
 ```sh
-npx hardhat graph <init|update> --contract-name MyContract --address 0x123... # the subtask parameter is optional
+npx hardhat graph <init|update|add> --contract-name MyContract --address 0x123... # the subtask parameter is optional
 ```
 
 ## How to
