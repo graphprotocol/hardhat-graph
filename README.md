@@ -239,4 +239,5 @@ services:
 7. Create and deploy the subgraph using the commands in the package.json `yarn create-local` and `yarn deploy-local`
 8. Interact with your contract
 9. Query the subgraph from `http://127.0.0.1:8000/subgraphs/name/<your-subgraph-name>/graphql`
-10. If for any reason you stop the hardhat node, it is recommended to stop the graph node, delete the `ipfs` and `postgres` folders in `data` (or the whole `data` folder) created by the graph node (you can run `yarn graph-local-clean` that will do that for you), and then repeat steps `3-9`.
+
+NOTE: If for any reason you stop the hardhat node, it is recommended to stop the graph node, delete the `ipfs` and `postgres` folders in `data` (or the whole `data` folder) created by the graph node (you can run `yarn graph-local-clean` that will do that for you), and then repeat steps `3-9`.
