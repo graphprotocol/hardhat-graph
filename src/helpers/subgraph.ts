@@ -71,67 +71,67 @@ export const updateNetworksFile = async (toolbox: any, network: string, dataSour
 
 export const runCodegen = async (hre: HardhatRuntimeEnvironment, directory: string): Promise<boolean> =>
   await fromDirectory(
-    hre, 
-    directory, 
+    hre,
+    directory,
     async () => {
       await graphCli.run(['codegen'])
-      
+
       return true
     }
   )
 
 export const runBuild = async (hre: HardhatRuntimeEnvironment, network: string, directory: string): Promise<boolean> =>
   await fromDirectory(
-    hre, 
-    directory, 
+    hre,
+    directory,
     async () => {
       await graphCli.run(['build', '--network', network])
-      
+
       return true
     }
   )
 
 export const runGraphAdd = async (
   hre: HardhatRuntimeEnvironment,
-  taskArgs: { 
-    contractName: string, 
+  taskArgs: {
+    contractName: string,
     address: string,
-    mergeEntities: boolean, 
-    abi: string, 
-    subgraphYaml: string }, 
+    mergeEntities: boolean,
+    abi: string,
+    subgraphYaml: string },
   directory: string): Promise<boolean> =>
     await fromDirectory(
-      hre, 
-      directory, 
+      hre,
+      directory,
       async () => {
-        const { 
+        const {
           abi,
           address,
           mergeEntities,
           subgraphYaml
         } = taskArgs
-      
+
         const { contractName } = parseName(taskArgs.contractName)
         const commandLine = ['add', address, '--contract-name', contractName]
-        
+
         if (subgraphYaml.includes(directory)) {
           commandLine.push(path.normalize(subgraphYaml.replace(directory, '')))
         } else {
           commandLine.push(subgraphYaml)
         }
-      
+
         if (mergeEntities) {
           commandLine.push('--merge-entities')
         }
-      
+
         if (abi) {
           if (abi.includes(directory)) {
             commandLine.push('--abi', path.normalize(abi.replace(directory, '')))
           } else {
             commandLine.push('--abi', abi)
-          }  
+          }
         }
-      
+
         await graphCli.run(commandLine)
 
         return true

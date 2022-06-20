@@ -10,7 +10,7 @@ export const fromDirectory = async (hre: HardhatRuntimeEnvironment, directory: s
   if (fs.existsSync(directory)) {
     process.chdir(directory)
   }
-  
+
   const result = await fn()
 
   process.chdir(hre.config.paths.root)

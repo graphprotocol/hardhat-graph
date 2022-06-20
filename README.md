@@ -1,14 +1,17 @@
-# Hardhat-graph
+# hardhat-graph
 
-## `init` subtask:
-  - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..`
+## Tasks
+
+### `init`
+  - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..'`
   - Workflow:
     - Generates a subgraph in `./subgraph` using `generateScaffold` from `graph-cli`
     - Generates a network.json file in `./subgraph` using `initNetworksConfig` from `graph-cli`
-    - Initialises a new repo if one does not currently exist. (Currently it does not create an initial commit)
+    - Initializes a new repo if one does not currently exist. (Currently it does not create an initial commit)
     - Generates or updates an existing .gitignore file.
     - Runs `codegen` command
   - Example usage:
+
 ```typescript
 async function deploy(contractName: string) {
   ....
@@ -25,15 +28,16 @@ deploy()
   });
 ```
 
-## `update` subtask:
-  - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..`
+### `update`
+  - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..'`
   - Workflow:
     - Updates the contract ABI in `./subgraph/abis`
     - Updates the contract Address in `network.json` if it's deployed to the same network. If the contract has been deployed to a network that is not present in the config file, adds an entry for the new network.
     - Checks for changes to the contract events. If there are any changes the task will exit and the user will be informed and prompted to address the changes in the subgraph.yaml file and manually run `codegen` and `build`.
-    - Runs `codegen` and if there are no changes to the contract events.
-    - For now you'll have to manually run `graph build --network <network>` from the subgraph folder
+    - Runs `codegen` if there are no changes to the contract events.
+    - For now you'll have to manually run `graph build --network <network>` from the subgraph folder if you want to update the dataSources network in the subgraph.
   - Example usage:
+
 ```typescript
 async function deploy(contractName: string) {
   ....
@@ -50,7 +54,25 @@ deploy()
   });
 ```
 
-## `graph` task:
+### `add`
+  - Expects one mandatory parameter: `address: '0x123..`
+  - Has four optional paramaters:
+    - `subgraphYaml: path/to/subgraph.yaml` (default is './subgraph.yaml')
+    - `abi: path/to/Contract.json` Loads abi from file
+    - `mergeEntities` When this flag is given new entities with already taken names are skipped
+    - `contractName: MyContract` (default is 'Contract')
+  - Workflow:
+    - Checks whether the subgraph exists and creates a command line of the arguments passed
+    - Runs `graph add` from the graph-cli with the given params which updates the `subgraph.yaml`, `schema.graphql` and adds a new abi and mapping file
+    - Runs `codegen`
+
+  - Example usage:
+
+```sh
+npx hardhat add --address 0x123... --abi path/to/Contract.json --contactName MyContract --merge-entities
+```
+
+### `graph`
   - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..` and an optional positional parameter `subtask` <init|update>.
   - Workflow:
     - Conditionally runs either `init` or `update` subtask depending if a subgraph already exists or not. If the optional param `subtask` is passed it will run that subtask instead.
@@ -74,26 +96,8 @@ or
 ```sh
 npx hardhat graph <init|update> --contract-name MyContract --address 0x123... # the subtask parameter is optional
 ```
-## `add` task:
-  - Expects one mandatory parameter: `address: '0x123..`
-  - Has four optional paramaters:
-    - `subgraphYaml: /path/to/subgraph.yaml` (default is './subgraph.yaml')
-    - `abi: /path/to/Contract.json` Loads abi from file
-    - `mergeEntities` When this flag is given new entities with already taken names are skipped
-    - `contractName: MyContract` (default is 'Contract')
-  - Workflow:
-    - Checks whether the subgraph exists and creates a command line of the arguments passed
-    - Runs `graph add` from the graph-cli with the given params which updates the `subgraph.yaml`, `schema.graphql` and adds a new abi and mapping file
-    - Runs `codegen`
 
-  - Example usage:
-
-```sh
-npx hardhat add --address 0x123... --merge-entities
-```
-  
-
-## How to try it out:
+## How to
 NOTE:
 npm >7 should auto-install peerDependencies from plugins, but if they are not or you're using `yarn`, add
 ```
@@ -130,7 +134,7 @@ Import the plugin in your `hardhat.config` file:
 JS: `require('hardhat-graph')`
 TS: `import 'hardhat-graph'`
 
-## Configurable options in hardhat.config file:
+## Configurable options in hardhat.config file
 JS:
 ```javascript
 module.exports = {
@@ -163,7 +167,7 @@ export default {
 }
 ```
 
-# Running local `graph node` against local `hardhat node`
+## Running local `graph node` against local `hardhat node`
 
 1. Create a `docker-compose.yml` file:
 
@@ -235,4 +239,4 @@ services:
 7. Create and deploy the subgraph using the commands in the package.json `yarn create-local` and `yarn deploy-local`
 8. Interact with your contract
 9. Query the subgraph from `http://127.0.0.1:8000/subgraphs/name/<your-subgraph-name>/graphql`
-10. If for any reason you restart the hardhat node, it is recommended to stop the graph node, delete the `data` folder created by the graph node and start new nodes.
+10. If for any reason you stop the hardhat node, it is recommended to stop the graph node, delete the `ipfs` and `postgres` folders in `data` (or the whole `data` folder) created by the graph node (you can run `yarn graph-local-clean` that will do that for you), and then repeat steps `3-9`.
