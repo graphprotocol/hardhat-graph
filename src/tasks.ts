@@ -7,7 +7,6 @@ import { parseName } from 'hardhat/utils/contract-names'
 import { checkForRepo, initRepository, initGitignore } from './helpers/git'
 import { initSubgraph, runCodegen, updateNetworksFile, runGraphAdd } from './helpers/subgraph'
 
-
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
 const Subgraph = require('@graphprotocol/graph-cli/src/subgraph')
 const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
@@ -23,16 +22,16 @@ task("graph", "Wrapper task that will conditionally execute init, update or add.
     const manifestPath = path.join(directory, 'subgraph.yaml')
     const subgraph = toolbox.filesystem.exists(directory) == "dir" && toolbox.filesystem.exists(manifestPath) == "file"
     let command = 'init'
-    
+
     if (subgraph) {
       const protocol = new Protocol('ethereum')
       const manifest = await Subgraph.load(manifestPath, { protocol })
       let { contractName } = taskArgs
-      
-      ;({ contractName } = parseName(contractName))
-      
-      const dataSourcePresent = manifest.result.get('dataSources').map((ds: any) => ds.get('name')).contains(contractName)
 
+      // If name is fully qualified, remove the source name
+      // This is required to check if the dataSource already exists in the subgraph.yaml
+      ;({ contractName } = parseName(contractName))
+      const dataSourcePresent = manifest.result.get('dataSources').map((ds: any) => ds.get('name')).contains(contractName)
       command = dataSourcePresent ? "update" : "add"
     }
 
@@ -89,18 +88,19 @@ subtask("init", "Initialize a subgraph")
     // Add scripts to package.json
     await toolbox.patching.update('package.json', (content: any) => {
       if(!content.scripts) content.scripts = {}
-      
-      content.scripts['test'] = 'graph test'
-      content.scripts['graph-local'] = "docker-compose up"
-      content.scripts['graph-local-rm'] = "docker-compose down -v && docker-compose rm -v && rm -rf data"
+
+      content.scripts['graph-test'] = 'graph test'
+      content.scripts['graph-build'] = `cd ${directory} && graph codegen`
+      content.scripts['graph-codegen'] = `cd ${directory} && graph build`
+      content.scripts['graph-local'] = 'docker-compose up'
+      content.scripts['graph-local-clean'] = "docker-compose down -v && docker-compose rm -v && rm -rf data/ipfs data/postgres"
       content.scripts['create-local'] = `graph create --node http://127.0.0.1:8020 ${subgraphName}`
-      content.scripts['deploy-local'] = `graph deploy --ipfs http://127.0.0.1:5001 --node http://127.0.0.1:8020 ${subgraphName} ${directory}/subgraph.yaml`
+      content.scripts['deploy-local'] = `cd ${directory} && graph deploy --ipfs http://127.0.0.1:5001 --node http://127.0.0.1:8020 ${subgraphName}`
       content.scripts['hardhat-local'] = "hardhat node --hostname 0.0.0.0"
-      
+
       return content
     })
 
-    // Maybe Not needed?
     const gitignore = await initGitignore(toolbox, directory)
     if (gitignore !== true) {
       process.exit(1)
@@ -120,15 +120,18 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
     const network = hre.network.name || hre.config.defaultNetwork
     const subgraph = toolbox.filesystem.read(path.join(directory, 'subgraph.yaml'), 'utf8')
 
+    // If contractName is fully qualified, remove the source name
+    const { contractName } = parseName(taskArgs.contractName)
+
     if (!toolbox.filesystem.exists(directory) || !subgraph) {
       toolbox.print.error("No subgraph found! Please first initialize a new subgraph!")
       process.exit(1)
     }
 
     await withSpinner(
-      `Update subgraph dataSource ${taskArgs.contractName}`,
-      `Failed to update subgraph dataSource ${taskArgs.contractName}`,
-      `Warnings while updating subgraph dataSource ${taskArgs.contractName}`,
+      `Update subgraph dataSource ${contractName}`,
+      `Failed to update subgraph dataSource ${contractName}`,
+      `Warnings while updating subgraph dataSource ${contractName}`,
       async (spinner: any) => {
         step(spinner, `Fetching new contract version`)
         const artifact = await hre.artifacts.readArtifact(taskArgs.contractName)
@@ -153,24 +156,19 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
 
         step(spinner, `Checking events for changes`)
         const eventsChanged = await compareAbiEvents(spinner, toolbox, dataSource, artifact.abi)
+
         if (!eventsChanged)  {
           const codegen = await runCodegen(hre, directory)
           if (codegen !== true) {
             process.exit(1)
           }
-
-          // Comment out temporarily
-          // let build = await runBuild(hre, network, directory)
-          // if (build !== true) {
-          //   process.exit(1)
-          // }
         }
         return true
       }
     )
   })
 
-task("add", "Add a datasource to the project")
+task("add", "Add a dataSource to the project")
   .addParam("address", "The address of the contract")
   .addOptionalParam("subgraphYaml", "The location of the subgraph.yaml file", "subgraph.yaml")
   .addOptionalParam("contractName", "The name of the contract", "Contract")
@@ -179,7 +177,6 @@ task("add", "Add a datasource to the project")
   .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
     const subgraph = toolbox.filesystem.read(path.join(directory, taskArgs.subgraphYaml), 'utf8')
-    const network = hre.network.name || hre.config.defaultNetwork
     const { contractName } = parseName(taskArgs.contractName)
 
     if (!toolbox.filesystem.exists(directory) || !subgraph) {
@@ -188,17 +185,13 @@ task("add", "Add a datasource to the project")
     }
 
     await withSpinner(
-      `Add a new datasource`,
-      `Failed to add a new datasource`,
-      `Warnings while adding a new datasource`,
+      `Add a new dataSource ${contractName}`,
+      `Failed to add a new dataSource ${contractName}`,
+      `Warnings while adding a new dataSource ${contractName}`,
       async (spinner: any) => {
         step(spinner, `Initiating graph add command`)
         await runGraphAdd(hre, taskArgs, directory)
-        
-        // Temporarily until graph add itself updates the networks file
-        step(spinner, `Updating networks.json`)
-        await updateNetworksFile(toolbox, network, contractName, taskArgs.address, directory)
-        
+
         return true
       }
     )
