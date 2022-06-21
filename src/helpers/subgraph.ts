@@ -45,7 +45,6 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
           abi,
           contract: address,
           contractName: artifact.contractName,
-          dataSourceName: contractName,
           indexEvents,
           node,
         },
