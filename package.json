@@ -1,6 +1,8 @@
 {
-  "name": "hardhat-graph",
+  "name": "@graphprotocol/hardhat-graph",
   "version": "0.0.1",
+  "license": "(Apache-2.0 OR MIT)",
+  "description": "Hardhat plugin for Ethereum developers to build subgraphs alongside their smart contracts",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
