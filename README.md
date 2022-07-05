@@ -233,10 +233,10 @@ services:
 ```
 
 3. Run the hardhat node with `npx hardhat node --hostname 0.0.0.0`
-4. Deploy your contract[s] to the localhost network either with a deploy script/task or throgh the hardhat console `npx hardhat console --network localhost`
-5. Update the networks of your dataSources in the `subgraph.yaml` file to `localhost` and the addresses to the deployed contract addresses
+4. Deploy your contract[s] to the localhost network either with a deploy script/task or through the hardhat console `npx hardhat console --network localhost`
+5. Update the network configuration in `subgraph.yaml` file to `localhost` and the addresses to the deployed contract addresses (You can use `yarn build --network localhost`. If you use graph-cli >= 0.32.0 you can skip this step and see step 7)
 6. Run `docker-compose up` or `docker compose up`
-7. Create and deploy the subgraph using the commands in the package.json `yarn create-local` and `yarn deploy-local`
+7. Create and deploy the subgraph using the commands in the package.json `yarn create-local` and `yarn deploy-local` (Since graph-cli 0.32.0 you can use `--network localhost` option with the deploy command, similarly to `yarn build` in step 5)
 8. Interact with your contract
 9. Query the subgraph from `http://127.0.0.1:8000/subgraphs/name/<your-subgraph-name>/graphql`
 
