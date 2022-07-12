@@ -131,7 +131,9 @@ or from a specific branch:
 ```
 
 Import the plugin in your `hardhat.config` file:
-JS: `require("@graphprotocol/hardhat-graph")`f
+
+JS: `require("@graphprotocol/hardhat-graph")`
+
 TS: `import "@graphprotocol/hardhat-graph"`
 
 ## Configurable options in hardhat.config file
