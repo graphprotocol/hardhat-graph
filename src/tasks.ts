@@ -90,8 +90,8 @@ subtask("init", "Initialize a subgraph")
       if(!content.scripts) content.scripts = {}
 
       content.scripts['graph-test'] = 'graph test'
-      content.scripts['graph-build'] = `cd ${directory} && graph codegen`
-      content.scripts['graph-codegen'] = `cd ${directory} && graph build`
+      content.scripts['graph-codegen'] = `cd ${directory} && graph codegen`
+      content.scripts['graph-build'] = `cd ${directory} && graph build`
       content.scripts['graph-local'] = 'docker-compose up'
       content.scripts['graph-local-clean'] = "docker-compose down -v && docker-compose rm -v && rm -rf data/ipfs data/postgres"
       content.scripts['create-local'] = `graph create --node http://127.0.0.1:8020 ${subgraphName}`
