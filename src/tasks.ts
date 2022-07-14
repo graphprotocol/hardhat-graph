@@ -1,6 +1,7 @@
 import path from 'path'
 import * as YAML from 'yaml'
 import * as toolbox from 'gluegun'
+import fetch from 'node-fetch'
 import { subtask, task } from 'hardhat/config'
 import { compareAbiEvents } from './helpers/events'
 import { parseName } from 'hardhat/utils/contract-names'
@@ -100,6 +101,17 @@ subtask("init", "Initialize a subgraph")
 
       return content
     })
+
+    // Download docker-compose.yaml
+    await fetch("https://raw.githubusercontent.com/graphprotocol/graph-node/e64083a00818bba863efc7c74485e050f8028ea5/docker/docker-compose.yml")
+          .then(async (response: any) => {
+            if (response.ok) {
+              await toolbox.filesystem.write("docker-compose.yaml", await response.text());
+              await toolbox.patching.replace("docker-compose.yaml", `ethereum: 'mainnet:http://host.docker.internal:8545'`, `ethereum: 'localhost:http://host.docker.internal:8545'`)
+            } else {
+              toolbox.print.warning("Could not download docker-compose.yml. You'll need to manually create it. Please visit https://github.com/graphprotocol/hardhat-graph#running-local-graph-node-against-local-hardhat-node for more information.")
+            }
+          })
 
     const gitignore = await initGitignore(toolbox, directory)
     if (gitignore !== true) {
