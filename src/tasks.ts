@@ -102,12 +102,12 @@ subtask("init", "Initialize a subgraph")
       return content
     })
 
-    // Download docker-compose.yaml
+    // Download docker-compose.yml
     await fetch("https://raw.githubusercontent.com/graphprotocol/graph-node/e64083a00818bba863efc7c74485e050f8028ea5/docker/docker-compose.yml")
           .then(async (response: any) => {
             if (response.ok) {
-              await toolbox.filesystem.write("docker-compose.yaml", await response.text());
-              await toolbox.patching.replace("docker-compose.yaml", `ethereum: 'mainnet:http://host.docker.internal:8545'`, `ethereum: 'localhost:http://host.docker.internal:8545'`)
+              await toolbox.filesystem.write("docker-compose.yml", await response.text());
+              await toolbox.patching.replace("docker-compose.yml", `ethereum: 'mainnet:http://host.docker.internal:8545'`, `ethereum: 'localhost:http://host.docker.internal:8545'`)
             } else {
               toolbox.print.warning("Could not download docker-compose.yml. You'll need to manually create it. Please visit https://github.com/graphprotocol/hardhat-graph#running-local-graph-node-against-local-hardhat-node for more information.")
             }
