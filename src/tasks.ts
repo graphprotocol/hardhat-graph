@@ -1,7 +1,7 @@
 import path from 'path'
 import * as YAML from 'yaml'
 import * as toolbox from 'gluegun'
-import fetch from 'node-fetch'
+import fetch, { Response } from 'node-fetch'
 import { subtask, task } from 'hardhat/config'
 import { compareAbiEvents } from './helpers/events'
 import { parseName } from 'hardhat/utils/contract-names'
@@ -104,7 +104,7 @@ subtask("init", "Initialize a subgraph")
 
     // Download docker-compose.yml
     await fetch("https://raw.githubusercontent.com/graphprotocol/graph-node/e64083a00818bba863efc7c74485e050f8028ea5/docker/docker-compose.yml")
-          .then(async (response: any) => {
+          .then(async (response: Response) => {
             if (response.ok) {
               await toolbox.filesystem.write("docker-compose.yml", await response.text());
               await toolbox.patching.replace("docker-compose.yml", `ethereum: 'mainnet:http://host.docker.internal:8545'`, `ethereum: 'localhost:http://host.docker.internal:8545'`)
