@@ -1,6 +1,6 @@
-const { withSpinner } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
-
 import fetch, { Response } from 'node-fetch'
+
+const { withSpinner } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 
 export const generateDockerCompose = async (toolbox: any): Promise<void> => {
   await withSpinner(
