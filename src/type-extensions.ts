@@ -11,6 +11,7 @@ declare module "hardhat/types/config" {
 
   export interface HardhatConfig {
     subgraph?: Subgraph;
+    firehose?: boolean;
   }
 
   export interface Subgraph {

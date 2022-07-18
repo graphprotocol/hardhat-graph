@@ -1,6 +1,7 @@
 import path from 'path'
 import "./type-extensions"
-import {extendConfig} from "hardhat/config"
+import { extendConfig, experimentalAddHardhatNetworkMessageTraceHook} from "hardhat/config"
+import { config } from 'process'
 
 export * from "./tasks"
 
@@ -18,3 +19,7 @@ extendConfig((config) => {
 
   config.subgraph = Object.assign(defaultConfig, config.subgraph)
 })
+
+experimentalAddHardhatNetworkMessageTraceHook(async (hre, trace, isMessageTraceFromACall) => {
+  console.log('TRACE: ' + trace);
+});

@@ -12,6 +12,12 @@ const Subgraph = require('@graphprotocol/graph-cli/src/subgraph')
 const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
 const { initNetworksConfig } = require('@graphprotocol/graph-cli/src/command-helpers/network')
 
+
+subtask("test")
+  .setAction(async (hre) => {
+
+  })
+
 task("graph", "Wrapper task that will conditionally execute init, update or add.")
   .addOptionalPositionalParam("subtask", "Specify which subtask to execute")
   .addParam("contractName", "The name of the contract")
