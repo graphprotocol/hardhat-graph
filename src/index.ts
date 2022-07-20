@@ -1,7 +1,9 @@
 import path from 'path'
 import "./type-extensions"
-import { extendConfig, experimentalAddHardhatNetworkMessageTraceHook } from "hardhat/config"
-import { config } from 'process'
+import { extendConfig, experimentalAddHardhatNetworkMessageTraceHook, subtask } from "hardhat/config"
+import { TASK_NODE_SERVER_READY } from "hardhat/builtin-tasks/task-names";
+import { BlockWithTransactions, TransactionResponse, TransactionReceipt } from '@ethersproject/abstract-provider';
+import '@nomiclabs/hardhat-ethers';
 
 export * from "./tasks"
 
@@ -20,6 +22,13 @@ extendConfig((config) => {
 
   config.subgraph = Object.assign(defaultConfig, config.subgraph)
 })
+
+subtask(TASK_NODE_SERVER_READY).setAction(async (args, hre, runSuper) => {
+  hre.ethers.provider.on('block', (blockNumber: number, error: any) => console.log('block #: ' + blockNumber));
+  hre.ethers.provider.on('error', (error: any) => console.log(error));
+  hre.ethers.provider.on('pending', () => console.log("pending"));
+  await runSuper(args);
+});
 
 experimentalAddHardhatNetworkMessageTraceHook(async (hre, trace, isMessageTraceFromACall) => {
   console.log('TRACE: ' + trace);
