@@ -2,6 +2,7 @@ import path from 'path'
 import "./type-extensions"
 import { extendConfig, experimentalAddHardhatNetworkMessageTraceHook, subtask } from "hardhat/config"
 import { TASK_NODE_SERVER_READY } from "hardhat/builtin-tasks/task-names";
+import { traceHandler } from './trace-handler';
 import { BlockWithTransactions, TransactionResponse, TransactionReceipt } from '@ethersproject/abstract-provider';
 import '@nomiclabs/hardhat-ethers';
 
@@ -31,5 +32,6 @@ subtask(TASK_NODE_SERVER_READY).setAction(async (args, hre, runSuper) => {
 });
 
 experimentalAddHardhatNetworkMessageTraceHook(async (hre, trace, isMessageTraceFromACall) => {
+  await traceHandler(hre, trace);
   console.log('TRACE: ' + trace);
 });

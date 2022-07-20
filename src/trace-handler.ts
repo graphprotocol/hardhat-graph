@@ -3,6 +3,7 @@ import { BlockWithTransactions, TransactionResponse, TransactionReceipt } from '
 import { MessageTraceStep, isCreateTrace, isCallTrace, CreateMessageTrace, CallMessageTrace, isEvmStep, isPrecompileTrace } from "hardhat/internal/hardhat-network/stack-traces/message-trace";
 
 export const traceHandler = async (hre: HardhatRuntimeEnvironment, trace: MessageTraceStep) => {
+  console.log("in trace h")
   let stepper = async (step: MessageTraceStep) => {
       if (isEvmStep(step) || isPrecompileTrace(step))
           return;
