@@ -16,8 +16,8 @@
     "README.md"
   ],
   "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.31.0",
-    "@graphprotocol/graph-ts": "^0.27.0",
+    "@graphprotocol/graph-cli": "^0.36.1",
+    "@graphprotocol/graph-ts": "^0.29.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^12.20.50",
     "@types/node-fetch": "2.6.2",
@@ -36,8 +36,8 @@
     "yaml": "^2.0.1"
   },
   "peerDependencies": {
-    "@graphprotocol/graph-cli": ">= 0.31.0",
-    "@graphprotocol/graph-ts": ">= 0.27.0",
+    "@graphprotocol/graph-cli": ">= 0.36.1",
+    "@graphprotocol/graph-ts": ">= 0.29.0",
     "hardhat": ">=2.9.0"
   }
 }
