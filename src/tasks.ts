@@ -1,12 +1,12 @@
 import path from 'path'
 import * as YAML from 'yaml'
 import * as toolbox from 'gluegun'
-import { subtask, task } from 'hardhat/config'
+import { task, types } from 'hardhat/config'
 import { compareAbiEvents } from './helpers/events'
 import { parseName } from 'hardhat/utils/contract-names'
 import { generateDockerCompose, generatePackageScripts } from './helpers/generator'
 import { checkForRepo, initRepository, initGitignore } from './helpers/git'
-import { initSubgraph, runCodegen, updateNetworksFile, runGraphAdd } from './helpers/subgraph'
+import { initSubgraph, runCodegen, updateNetworksConfig, runGraphAdd } from './helpers/subgraph'
 
 const Protocol = require('@graphprotocol/graph-cli/src/protocols')
 const Subgraph = require('@graphprotocol/graph-cli/src/subgraph')
@@ -17,6 +17,7 @@ task("graph", "Wrapper task that will conditionally execute init, update or add.
   .addOptionalPositionalParam("subtask", "Specify which subtask to execute")
   .addParam("contractName", "The name of the contract")
   .addParam("address", "The address of the contract")
+  .addOptionalParam("startBlock", 'The subgraph startBlock', undefined, types.int)
   .addFlag("mergeEntities", "Whether the entities should be merged")
   .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
@@ -41,19 +42,14 @@ task("graph", "Wrapper task that will conditionally execute init, update or add.
     await hre.run(subtask || command, args)
   });
 
-  const getArtifactPath = async (hre: any, contractName: string): Promise<string> => {
-    const artifact = await hre.artifacts.readArtifact(contractName)
-    return path.join(hre.config.paths.artifacts, artifact.sourceName, `${artifact.contractName}.json`)
-  }
-
-
-/// MAYBE INIT AND UPDATE SHOULD NOT BE SUBTASKS BUT JUST FUNCTIONS?
-subtask("init", "Initialize a subgraph")
+task("init", "Initialize a subgraph")
   .addParam("contractName", "The name of the contract")
   .addParam("address", "The address of the contract")
+  .addOptionalParam("startBlock", 'The subgraph startBlock', undefined, types.int)
   .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
     const subgraphName = hre.config.subgraph.name
+    const network = hre.network.name || hre.config.defaultNetwork
 
     if (toolbox.filesystem.exists(directory) == "dir" && toolbox.filesystem.exists(path.join(directory, 'subgraph.yaml')) == "file") {
       toolbox.print.error("Subgraph already exists! Please use the update subtask to update an existing subgraph!")
@@ -69,6 +65,8 @@ subtask("init", "Initialize a subgraph")
     if (networkConfig !== true) {
       process.exit(1)
     }
+
+    await updateNetworksConfig(toolbox, network, taskArgs.contractName, 'startBlock', taskArgs.startBlock, directory)
 
     const isGitRepo = await checkForRepo(toolbox)
     if (!isGitRepo) {
@@ -102,9 +100,10 @@ subtask("init", "Initialize a subgraph")
     }
   })
 
-subtask("update", "Updates an existing subgraph from artifact or contract address")
+task("update", "Updates an existing subgraph from artifact or contract address")
   .addParam("contractName", "The name of the contract")
   .addParam("address", "The address of the contract")
+  .addOptionalParam("startBlock", 'The subgraph startBlock', undefined, types.int)
   .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
     const network = hre.network.name || hre.config.defaultNetwork
@@ -142,7 +141,8 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
         toolbox.filesystem.write(path.join(directory, subgraphAbi.file), artifact.abi)
 
         step(spinner, `Updating contract's ${network} address in networks.json`)
-        await updateNetworksFile(toolbox, network, dataSource.name, taskArgs.address, directory)
+        await updateNetworksConfig(toolbox, network, dataSource.name, 'address', taskArgs.address, directory)
+        await updateNetworksConfig(toolbox, network, dataSource.name, 'startBlock', taskArgs.startBlock, directory)
 
         step(spinner, `Checking events for changes`)
         const eventsChanged = await compareAbiEvents(spinner, toolbox, dataSource, artifact.abi)
@@ -160,14 +160,16 @@ subtask("update", "Updates an existing subgraph from artifact or contract addres
 
 task("add", "Add a dataSource to the project")
   .addParam("address", "The address of the contract")
+  .addFlag("mergeEntities", "Whether the entities should be merged")
+  .addOptionalParam("startBlock", 'The subgraph startBlock', undefined, types.int)
   .addOptionalParam("subgraphYaml", "The location of the subgraph.yaml file", "subgraph.yaml")
   .addOptionalParam("contractName", "The name of the contract", "Contract")
-  .addFlag("mergeEntities", "Whether the entities should be merged")
   .addOptionalParam("abi", "Path to local abi file")
   .setAction(async (taskArgs, hre) => {
     const directory = hre.config.paths.subgraph
     const subgraph = toolbox.filesystem.read(path.join(directory, taskArgs.subgraphYaml), 'utf8')
     const { contractName } = parseName(taskArgs.contractName)
+    const network = hre.network.name || hre.config.defaultNetwork
 
     if (!toolbox.filesystem.exists(directory) || !subgraph) {
       toolbox.print.error("No subgraph found! Please first initialize a new subgraph!")
@@ -181,8 +183,14 @@ task("add", "Add a dataSource to the project")
       async (spinner: any) => {
         step(spinner, `Initiating graph add command`)
         await runGraphAdd(hre, taskArgs, directory)
+        await updateNetworksConfig(toolbox, network, contractName, 'startBlock', taskArgs.startBlock, directory)
 
         return true
       }
     )
   })
+
+  const getArtifactPath = async (hre: any, contractName: string): Promise<string> => {
+    const artifact = await hre.artifacts.readArtifact(contractName)
+    return path.join(hre.config.paths.artifacts, artifact.sourceName, `${artifact.contractName}.json`)
+  }
