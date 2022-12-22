@@ -86,7 +86,8 @@ npx hardhat add --address 0x123... --abi path/to/Contract.json --contactName MyC
 async function deploy(contractName: string) {
   ....
   await contract.deployed();
-  return { contractName: MyContract , address: contract.address}
+  const deployTx = await contract.deployTransaction.wait();
+  return { contractName: MyContract , address: contract.address, blockNumber: deployTx.blockNumber}
 }
 
 deploy()
