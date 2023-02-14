@@ -6,6 +6,7 @@ This is a hardhat plugin that aims to make subgraph building easy for Ethereum d
 
 ### `init`
   - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..'`
+  - Has optional param `startBlock` -  the optional number of the block that the data source starts indexing from
   - Workflow:
     - Generates a subgraph in `./subgraph` using `generateScaffold` from `graph-cli`
     - Generates a network.json file in `./subgraph` using `initNetworksConfig` from `graph-cli`
@@ -32,6 +33,7 @@ deploy()
 
 ### `update`
   - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..'`
+  - Has optional param `startBlock` -  the optional number of the block that the data source starts indexing from
   - Workflow:
     - Updates the contract ABI in `./subgraph/abis`
     - Updates the contract Address in `network.json` if it's deployed to the same network. If the contract has been deployed to a network that is not present in the config file, adds an entry for the new network.
@@ -58,6 +60,7 @@ deploy()
 
 ### `add`
   - Expects one mandatory parameter: `address: '0x123..`
+  - Has optional param `startBlock` -  the optional number of the block that the data source starts indexing from
   - Has four optional paramaters:
     - `subgraphYaml: path/to/subgraph.yaml` (default is './subgraph.yaml')
     - `abi: path/to/Contract.json` Loads abi from file
@@ -83,7 +86,8 @@ npx hardhat add --address 0x123... --abi path/to/Contract.json --contactName MyC
 async function deploy(contractName: string) {
   ....
   await contract.deployed();
-  return { contractName: MyContract , address: contract.address}
+  const deployTx = await contract.deployTransaction.wait();
+  return { contractName: MyContract , address: contract.address, blockNumber: deployTx.blockNumber}
 }
 
 deploy()
