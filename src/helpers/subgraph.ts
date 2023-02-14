@@ -1,14 +1,14 @@
 import path from 'path'
-import immutable from 'immutable'
+import { fromJS } from 'immutable'
 import { fromDirectory } from './execution'
 import { parseName } from 'hardhat/utils/contract-names'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
-const graphCli = require('@graphprotocol/graph-cli/src/cli')
-const Protocol = require('@graphprotocol/graph-cli/src/protocols')
-const { chooseNodeUrl } = require('@graphprotocol/graph-cli/src/command-helpers/node')
-const { withSpinner } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
-const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/src/command-helpers/scaffold')
+const graphCli = require('@graphprotocol/graph-cli/dist/cli')
+const Protocol = require('@graphprotocol/graph-cli/dist/protocols').default
+const { chooseNodeUrl } = require('@graphprotocol/graph-cli/dist/command-helpers/node')
+const { withSpinner } = require('@graphprotocol/graph-cli/dist/command-helpers/spinner')
+const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/dist/command-helpers/scaffold')
 
 const AVAILABLE_PRODUCTS = ['subgraph-studio', 'hosted-service']
 
@@ -35,7 +35,7 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
       const protocolInstance = new Protocol('ethereum')
       const ABI = protocolInstance.getABI()
       const artifact = await hre.artifacts.readArtifact(contractName)
-      const abi = new ABI(artifact.contractName, undefined, immutable.fromJS(artifact.abi))
+      const abi = new ABI(artifact.contractName, undefined, fromJS(artifact.abi))
 
       const scaffold = await generateScaffold(
         {

@@ -8,10 +8,10 @@ import { generateDockerCompose, generatePackageScripts } from './helpers/generat
 import { checkForRepo, initRepository, initGitignore } from './helpers/git'
 import { initSubgraph, runCodegen, updateNetworksConfig, runGraphAdd } from './helpers/subgraph'
 
-const Protocol = require('@graphprotocol/graph-cli/src/protocols')
-const Subgraph = require('@graphprotocol/graph-cli/src/subgraph')
-const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
-const { initNetworksConfig } = require('@graphprotocol/graph-cli/src/command-helpers/network')
+const Protocol = require('@graphprotocol/graph-cli/dist/protocols').default
+const Subgraph = require('@graphprotocol/graph-cli/dist/subgraph').default
+const { withSpinner, step } = require('@graphprotocol/graph-cli/dist/command-helpers/spinner')
+const { initNetworksConfig } = require('@graphprotocol/graph-cli/dist/command-helpers/network')
 
 task("graph", "Wrapper task that will conditionally execute init, update or add.")
   .addOptionalPositionalParam("subtask", "Specify which subtask to execute")
