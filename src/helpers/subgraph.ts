@@ -79,7 +79,7 @@ export const runCodegen = async (hre: HardhatRuntimeEnvironment, directory: stri
     hre,
     directory,
     async () => {
-      await codegenCmd();
+      await codegenCmd.run([]);
 
       return true
     }
