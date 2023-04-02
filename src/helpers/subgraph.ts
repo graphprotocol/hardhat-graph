@@ -4,9 +4,9 @@ import { fromDirectory } from './execution'
 import { parseName } from 'hardhat/utils/contract-names'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
-const {codegenCmd} = require('@graphprotocol/graph-cli/dist/commands/codegen')
-const {buildCmd} = require('@graphprotocol/graph-cli/dist/commands/build')
-const {addCmd} = require('@graphprotocol/graph-cli/dist/commands/add')
+const {CodegenCommand} = require('@graphprotocol/graph-cli/dist/commands/codegen')
+const {BuildCommand} = require('@graphprotocol/graph-cli/dist/commands/build')
+const {AddCommand} = require('@graphprotocol/graph-cli/dist/commands/add')
 const Protocol = require('@graphprotocol/graph-cli/dist/protocols').default
 const { chooseNodeUrl } = require('@graphprotocol/graph-cli/dist/command-helpers/node')
 const { withSpinner } = require('@graphprotocol/graph-cli/dist/command-helpers/spinner')
@@ -79,7 +79,7 @@ export const runCodegen = async (hre: HardhatRuntimeEnvironment, directory: stri
     hre,
     directory,
     async () => {
-      await codegenCmd.run([]);
+      await CodegenCommand.run([]);
 
       return true
     }
@@ -90,7 +90,7 @@ export const runBuild = async (hre: HardhatRuntimeEnvironment, network: string, 
     hre,
     directory,
     async () => {
-      await buildCmd.run(['--network', network])
+      await BuildCommand.run(['--network', network])
 
       return true
     }
@@ -137,7 +137,7 @@ export const runGraphAdd = async (
           }
         }
 
-        await addCmd.run(commandLine)
+        await AddCommand.run(commandLine)
 
         return true
       },
