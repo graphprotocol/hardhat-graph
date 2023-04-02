@@ -1,6 +1,8 @@
-# hardhat-graph
+# hardhat-graph [POC/WIP]
 
 This is a hardhat plugin that aims to make subgraph building easy for Ethereum developers. The goal is to allow the users to mimic a big portion of the graph-cli functionality. Below you can see a list of the currently available tasks, for a demo project that show how to use the pulgin you can check [this repo](https://github.com/graphprotocol/hardhat-graph-demo).
+
+NOTE: This project is POC/WIP, there could be breaking changes or bugs.
 
 ## Tasks
 
