@@ -61,7 +61,7 @@ task("init", "Initialize a subgraph")
       process.exit(1)
     }
 
-    const networkConfig = await initNetworksConfig(toolbox, directory, 'address')
+    const networkConfig = await initNetworksConfig(directory, 'address')
     if (networkConfig !== true) {
       process.exit(1)
     }
