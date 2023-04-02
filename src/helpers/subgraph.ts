@@ -4,9 +4,9 @@ import { fromDirectory } from './execution'
 import { parseName } from 'hardhat/utils/contract-names'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
-const {CodegenCommand} = require('@graphprotocol/graph-cli/dist/commands/codegen')
-const {BuildCommand} = require('@graphprotocol/graph-cli/dist/commands/build')
-const {AddCommand} = require('@graphprotocol/graph-cli/dist/commands/add')
+const CodegenCommand = require('@graphprotocol/graph-cli/dist/commands/codegen')
+const BuildCommand = require('@graphprotocol/graph-cli/dist/commands/build')
+const AddCommand = require('@graphprotocol/graph-cli/dist/commands/add')
 const Protocol = require('@graphprotocol/graph-cli/dist/protocols').default
 const { chooseNodeUrl } = require('@graphprotocol/graph-cli/dist/command-helpers/node')
 const { withSpinner } = require('@graphprotocol/graph-cli/dist/command-helpers/spinner')
