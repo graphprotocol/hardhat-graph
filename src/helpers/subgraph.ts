@@ -1,14 +1,16 @@
 import path from 'path'
-import immutable from 'immutable'
+import { fromJS } from 'immutable'
 import { fromDirectory } from './execution'
 import { parseName } from 'hardhat/utils/contract-names'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
-const graphCli = require('@graphprotocol/graph-cli/src/cli')
-const Protocol = require('@graphprotocol/graph-cli/src/protocols')
-const { chooseNodeUrl } = require('@graphprotocol/graph-cli/src/command-helpers/node')
-const { withSpinner } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
-const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/src/command-helpers/scaffold')
+const CodegenCommand = require('@graphprotocol/graph-cli/dist/commands/codegen').default
+const BuildCommand = require('@graphprotocol/graph-cli/dist/commands/build').default
+const AddCommand = require('@graphprotocol/graph-cli/dist/commands/add').default
+const Protocol = require('@graphprotocol/graph-cli/dist/protocols').default
+const { chooseNodeUrl } = require('@graphprotocol/graph-cli/dist/command-helpers/node')
+const { withSpinner } = require('@graphprotocol/graph-cli/dist/command-helpers/spinner')
+const { generateScaffold, writeScaffold } = require('@graphprotocol/graph-cli/dist/command-helpers/scaffold')
 
 const AVAILABLE_PRODUCTS = ['subgraph-studio', 'hosted-service']
 
@@ -35,7 +37,7 @@ export const initSubgraph = async (taskArgs: { contractName: string, address: st
       const protocolInstance = new Protocol('ethereum')
       const ABI = protocolInstance.getABI()
       const artifact = await hre.artifacts.readArtifact(contractName)
-      const abi = new ABI(artifact.contractName, undefined, immutable.fromJS(artifact.abi))
+      const abi = new ABI(artifact.contractName, undefined, fromJS(artifact.abi))
 
       const scaffold = await generateScaffold(
         {
@@ -77,7 +79,7 @@ export const runCodegen = async (hre: HardhatRuntimeEnvironment, directory: stri
     hre,
     directory,
     async () => {
-      await graphCli.run(['codegen'])
+      await CodegenCommand.run([]);
 
       return true
     }
@@ -88,7 +90,7 @@ export const runBuild = async (hre: HardhatRuntimeEnvironment, network: string, 
     hre,
     directory,
     async () => {
-      await graphCli.run(['build', '--network', network])
+      await BuildCommand.run(['--network', network])
 
       return true
     }
@@ -115,7 +117,7 @@ export const runGraphAdd = async (
         } = taskArgs
 
         const { contractName } = parseName(taskArgs.contractName)
-        const commandLine = ['add', address, '--contract-name', contractName]
+        const commandLine = [address, '--contract-name', contractName]
 
         if (subgraphYaml.includes(directory)) {
           commandLine.push(path.normalize(subgraphYaml.replace(directory, '')))
@@ -135,7 +137,7 @@ export const runGraphAdd = async (
           }
         }
 
-        await graphCli.run(commandLine)
+        await AddCommand.run(commandLine)
 
         return true
       },

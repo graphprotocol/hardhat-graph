@@ -1,4 +1,4 @@
-const { withSpinner, step } = require('@graphprotocol/graph-cli/src/command-helpers/spinner')
+const { withSpinner, step } = require('@graphprotocol/graph-cli/dist/command-helpers/spinner')
 
 export const checkForRepo = async (toolbox: any): Promise<boolean> => {
   try {
