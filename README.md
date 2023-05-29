@@ -73,12 +73,6 @@ deploy()
     - Runs `graph add` from the graph-cli with the given params which updates the `subgraph.yaml`, `schema.graphql` and adds a new abi and mapping file
     - Runs `codegen`
 
-  - Example usage:
-
-```sh
-npx hardhat add --address 0x123... --abi path/to/Contract.json --contactName MyContract --merge-entities
-```
-
 ### `graph`
   - Expects two parameters: `contractName: 'MyContract'` and `address: '0x123..` and an optional positional parameter `subtask` <init|update|add>.
   - Workflow:
